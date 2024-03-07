@@ -10,35 +10,20 @@ public class Board {
     }
 
     private void initialiseBoard() {
+        Character rank;
+        int file;
         for(int i = 0; i < 8; i++)
-            for(int j =0; j < 8; j++)
-                if((i+j)%2 == 0)
-                    board[i][j] = new Square(SquareColour.WHITE);
+            for(int j =0; j < 8; j++) {
+                rank = (char)(65+j);
+                file = 8-i;
+                if ((i + j) % 2 == 0)
+                    board[i][j] = new Square(SquareColour.WHITE, rank, file);
                 else
-                    board[i][j] = new Square(SquareColour.BLACK);
+                    board[i][j] = new Square(SquareColour.BLACK, rank, file);
+            }
     }
 
     public Square getSquare(int i, int j){
         return board[i][j];
-    }
-
-    public class Square{
-        private SquareColour squareColour;
-        private boolean occupied;
-        private Piece piece;
-
-        public Square(SquareColour squareColour) {
-            this.squareColour = squareColour;
-            this.occupied = false;
-        }
-
-        public SquareColour getSquareColour() {
-            return squareColour;
-        }
-    }
-
-    private enum SquareColour{
-        BLACK,
-        WHITE
     }
 }
