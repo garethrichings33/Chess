@@ -6,8 +6,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ChessGUI extends JFrame implements ActionListener {
-    Board board;
-    JPanel boardPanel;
+    private Board board;
+    private JPanel boardPanel;
+    private JButton[][] squareButtons;
 
     public ChessGUI(){
         board = new Board();
@@ -37,6 +38,7 @@ public class ChessGUI extends JFrame implements ActionListener {
         var panel =  new JPanel(new GridBagLayout());
         var boardFont = new Font("Arial", Font.PLAIN, 20);
         var squareSize = new Dimension(70, 70);
+        squareButtons = new JButton[8][8];
 
         GridBagConstraints gbc;
         JLabel rowLabel;
@@ -67,7 +69,11 @@ public class ChessGUI extends JFrame implements ActionListener {
                 gbc.gridy = i;
                 gbc.insets = new Insets(-2,-2,-2,-2);
                 panel.add(square, gbc);
-                System.out.println(i + " , " + j + ": " + board.getSquare(i,j).getRankAndFile());
+
+                if(i == 7 && j == 4)
+                    square.setIcon(board.getSquare(7,4).getPiece().getPieceIcon());
+
+                squareButtons[i][j] = square;
             }
         }
 
@@ -82,7 +88,23 @@ public class ChessGUI extends JFrame implements ActionListener {
             gbc.ipady = 20;
             panel.add(columnLabel,gbc);
         }
+
+//        addPieces();
+        panel.revalidate();
+        panel.repaint();
         return panel;
+    }
+
+    private void addPieces(){
+        Icon icon;
+//        for(int i = 0; i < 8; i++)
+//            for(int j = 0; j < 8; j++){
+//                icon = board.getSquare(i,j).getPiece().getPieceIcon();
+//                if(icon != null)
+//                    squareButtons[i][j].setIcon(icon);
+//            }
+                icon = board.getSquare(7,4).getPiece().getPieceIcon();
+                squareButtons[7][4].setIcon(icon);
     }
 
     @Override
