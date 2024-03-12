@@ -1,19 +1,34 @@
 package com.github.garethrichings33;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
 
 public abstract class Piece {
-    protected final Icon pieceIcon;
+    protected Image pieceIcon;
+    protected String iconResourceName;
 
     protected final PieceColour colour;
-    public Piece(Icon pieceIcon, PieceColour colour) {
-        this.pieceIcon = pieceIcon;
+    public Piece(PieceColour colour, String iconResourcename) {
         this.colour = colour;
+        try {
+            if(colour == PieceColour.WHITE)
+                this.iconResourceName = "/Chess_klt60.png";
+            else
+                this.iconResourceName = "/Chess_kdt60.png";
+
+            pieceIcon = new ImageIcon(ImageIO.read(KingPiece.class.getResourceAsStream(this.iconResourceName)))
+                    .getImage();
+        }
+        catch(IOException excp){
+            pieceIcon = new ImageIcon().getImage();
+        }
     }
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
 
-    public Icon getPieceIcon() {
+    public Image getPieceIcon() {
         return pieceIcon;
     }
 

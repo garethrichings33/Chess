@@ -31,10 +31,12 @@ public class Board {
     }
 
     private void createPieces() {
+        pieces.put("Black_King", new KingPiece(PieceColour.BLACK));
         pieces.put("White_King", new KingPiece(PieceColour.WHITE));
     }
 
     private void addPieces() {
+        board[0][4].setPiece(pieces.get("Black_King"));
         board[7][4].setPiece(pieces.get("White_King"));
     }
 

@@ -70,9 +70,6 @@ public class ChessGUI extends JFrame implements ActionListener {
                 gbc.insets = new Insets(-2,-2,-2,-2);
                 panel.add(square, gbc);
 
-                if(i == 7 && j == 4)
-                    square.setIcon(board.getSquare(7,4).getPiece().getPieceIcon());
-
                 squareButtons[i][j] = square;
             }
         }
@@ -89,22 +86,17 @@ public class ChessGUI extends JFrame implements ActionListener {
             panel.add(columnLabel,gbc);
         }
 
-//        addPieces();
+        addPieces();
         panel.revalidate();
         panel.repaint();
         return panel;
     }
 
     private void addPieces(){
-        Icon icon;
-//        for(int i = 0; i < 8; i++)
-//            for(int j = 0; j < 8; j++){
-//                icon = board.getSquare(i,j).getPiece().getPieceIcon();
-//                if(icon != null)
-//                    squareButtons[i][j].setIcon(icon);
-//            }
-                icon = board.getSquare(7,4).getPiece().getPieceIcon();
-                squareButtons[7][4].setIcon(icon);
+        for(int i = 0; i < 8; i++)
+            for(int j = 0; j < 8; j++)
+                if(board.getSquare(i, j).getPiece() != null)
+                    squareButtons[i][j].setIcon(new ImageIcon(board.getSquare(i, j).getPiece().getPieceIcon()));
     }
 
     @Override

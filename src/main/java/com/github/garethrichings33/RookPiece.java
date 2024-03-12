@@ -2,14 +2,12 @@ package com.github.garethrichings33;
 
 import java.util.HashMap;
 
-public class KingPiece extends Piece{
-
+public class RookPiece extends Piece{
     private static HashMap<Enum, String> iconResourceNames = new HashMap<>()
-        {{put(PieceColour.BLACK, "/Chess_kdt60.png");
-        put(PieceColour.WHITE, "/Chess_klt60.png");}};
-
-    public KingPiece(PieceColour colour) {
-            super(colour,iconResourceNames.get(colour));
+    {{put(PieceColour.BLACK, "/Chess_rdt60.png");
+        put(PieceColour.WHITE, "/Chess_rlt60.png");}};
+    public RookPiece(PieceColour colour) {
+        super(colour, iconResourceNames.get(colour));
     }
 
     @Override
