@@ -1,6 +1,7 @@
 package com.github.garethrichings33;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class BishopPiece extends Piece{
@@ -13,23 +14,33 @@ public class BishopPiece extends Piece{
         super(pieceColour, iconResourceNames.get(pieceColour));
         this.squareColour = squareColour;
         setCanJump(false);
+        setCastlingMove(false);
+        setPromotionMove(false);
         setTakingOnlyMove(false);
     }
 
     @Override
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
-        setCastlingMove(false);
-        setPromotionMove(false);
-        return false;
+        var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
+        boolean validMove = targetSquareValid(finalSquare, allowedFinalSquares);
+
+        return validMove;
     }
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        return null;
-    }
+        ArrayList<int[]> allowedSquares = new ArrayList<>();
 
-    @Override
-    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
-        return null;
+        int[][] steps = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+        int[] square;
+        for(int i = 0; i < 4; i++) {
+            square = Arrays.copyOf(initialSquare, initialSquare.length);
+            while (onGrid(Vectors.sum(square, steps[i]))) {
+                square = Vectors.sum(square, steps[i]);
+                allowedSquares.add(square);
+            }
+        }
+
+        return allowedSquares;
     }
 }

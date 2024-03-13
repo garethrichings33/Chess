@@ -60,18 +60,17 @@ public class PawnPiece extends Piece{
         return allowedSquares;
     }
 
-    @Override
-    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
-        int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
-        int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);
-        ArrayList<int[]> visitedSquares = new ArrayList<>();
-
-        int index = 0;
-        while(!Arrays.equals(Vectors.sum(visitedSquare, step), finalSquare)) {
-            visitedSquare = Vectors.sum(visitedSquare, step);
-            visitedSquares.add(visitedSquare);
-        }
-
-        return visitedSquares;
-    }
+//    @Override
+//    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
+//        int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
+//        int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);
+//        ArrayList<int[]> visitedSquares = new ArrayList<>();
+//
+//        while(!Arrays.equals(Vectors.sum(visitedSquare, step), finalSquare)) {
+//            visitedSquare = Vectors.sum(visitedSquare, step);
+//            visitedSquares.add(visitedSquare);
+//        }
+//
+//        return visitedSquares;
+//    }
 }
