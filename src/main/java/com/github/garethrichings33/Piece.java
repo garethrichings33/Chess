@@ -5,13 +5,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class Piece {
     private final Image pieceIcon;
     protected String iconResourceName;
     private final PieceColour colour;
     private boolean canJump;
-    private boolean isTakingMove;
+    private boolean isTakingOnlyMove;
     private boolean isCastlingMove;
     private boolean isPromotionMove;
 
@@ -31,9 +32,10 @@ public abstract class Piece {
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
     protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
+    public abstract ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare);
     public boolean targetSquareValid(int[] targetSquare, ArrayList<int[]> validTargetSquares){
         for(int[] vector : validTargetSquares)
-            if (Vectors.areEqual(targetSquare, vector))
+            if (Arrays.equals(targetSquare, vector))
                 return true;
 
         return false;
@@ -50,11 +52,11 @@ public abstract class Piece {
     public PieceColour getColour() {
         return colour;
     }
-    public boolean isTakingMove() {
-        return isTakingMove;
+    public boolean isTakingOnlyMove() {
+        return isTakingOnlyMove;
     }
-    public void setTakingMove(boolean takingMove) {
-        isTakingMove = takingMove;
+    public void setTakingOnlyMove(boolean takingOnlyMove) {
+        isTakingOnlyMove = takingOnlyMove;
     }
     public boolean isCastlingMove() {
         return isCastlingMove;

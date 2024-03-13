@@ -1,6 +1,7 @@
 package com.github.garethrichings33;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class PawnPiece extends Piece{
@@ -28,7 +29,7 @@ public class PawnPiece extends Piece{
 
         if(validMove) {
             setPromotionMove(finalSquare[0] == 0 || finalSquare[0] == 7);
-            setTakingMove(finalSquare[1] != initialSquare[1]);
+            setTakingOnlyMove(finalSquare[1] != initialSquare[1]);
             setCastlingMove(false);
             maxMove = 1;
         }
@@ -54,9 +55,23 @@ public class PawnPiece extends Piece{
             allowedSquare[0] = initialSquare[0] + 2 * direction;
             allowedSquare[1] = initialSquare[1];
             allowedSquares.add(allowedSquare);
-            System.out.println("Possible: " + allowedSquare[0] + " , " + allowedSquare[1]);
         }
 
         return allowedSquares;
+    }
+
+    @Override
+    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
+        int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
+        int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);
+        ArrayList<int[]> visitedSquares = new ArrayList<>();
+
+        int index = 0;
+        while(!Arrays.equals(Vectors.sum(visitedSquare, step), finalSquare)) {
+            visitedSquare = Vectors.sum(visitedSquare, step);
+            visitedSquares.add(visitedSquare);
+        }
+
+        return visitedSquares;
     }
 }

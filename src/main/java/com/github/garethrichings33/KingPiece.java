@@ -18,11 +18,17 @@ public class KingPiece extends Piece{
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
         setCastlingMove(true);
         setPromotionMove(false);
+        setTakingOnlyMove(false);
         return false;
     }
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
+        return null;
+    }
+
+    @Override
+    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
         return null;
     }
 }

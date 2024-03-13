@@ -13,7 +13,7 @@ public class BishopPiece extends Piece{
         super(pieceColour, iconResourceNames.get(pieceColour));
         this.squareColour = squareColour;
         setCanJump(false);
-        setTakingMove(true);
+        setTakingOnlyMove(false);
     }
 
     @Override
@@ -25,6 +25,11 @@ public class BishopPiece extends Piece{
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
+        return null;
+    }
+
+    @Override
+    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
         return null;
     }
 }

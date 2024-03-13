@@ -10,7 +10,7 @@ public class RookPiece extends Piece{
     public RookPiece(PieceColour pieceColour) {
         super(pieceColour, iconResourceNames.get(pieceColour));
         setCanJump(false);
-        setTakingMove(true);
+        setTakingOnlyMove(false);
     }
 
     @Override
@@ -22,6 +22,11 @@ public class RookPiece extends Piece{
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
+        return null;
+    }
+
+    @Override
+    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
         return null;
     }
 }

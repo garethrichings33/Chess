@@ -9,6 +9,7 @@ public class GameBoard {
     private HashMap<String, Piece> pieces;
     private Player[] players;
     private int activePlayer;
+    private ArrayList<String> moveList;
 
     public GameBoard() {
         board = new Square[8][8];
@@ -19,6 +20,7 @@ public class GameBoard {
         addPieces();
 
         initialisePlayers();
+        moveList = new ArrayList<>();
     }
 
     private void initialisePlayers() {
@@ -91,32 +93,53 @@ public class GameBoard {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
 
-//        ArrayList<Square> path = getPath(fromSquareCoordinates, toSquareCoordinates);
-
         var piece = getSquare(fromSquareCoordinates).getPiece();
+        if(piece == null)
+            return false;
+
+//      Check colour of piece matches player's colour
         var pieceColour = piece.getColour();
         if(players[activePlayer].getPieceColour() != pieceColour)
             return false;
 
+//      Check move is within scope of the chosen piece.
         if(!piece.moveAllowed(fromSquareCoordinates, toSquareCoordinates))
             return false;
 
-        if(piece.isTakingMove() &&
-                (getSquare(toSquareCoordinates).getPiece() == null ||
-                        pieceColour == getSquare(toSquareCoordinates).getPiece().getColour()))
+//      Check path is clear for move for non-jumping pieces.
+        ArrayList<int[]> visitedSquares = piece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
+        if(!piece.getCanJump()){
+            for(var visitedSquare : visitedSquares)
+                if(getSquare(visitedSquare).getPiece() != null)
+                    return false;
+        }
+
+//      Check pawn is actually taking a piece when moving diagonally.
+        if(piece.isTakingOnlyMove() && getSquare(toSquareCoordinates).getPiece() == null)
             return false;
 
-        if(!piece.isTakingMove() && getSquare(toSquareCoordinates).getPiece() != null)
-            return false;
+//      Check a taking move. Must take a piece of the opposite colour.
+        Piece pieceTaken = null;
+        if(getSquare(toSquareCoordinates).getPiece() != null) {
+            if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour) {
+                return false;
+            }
+            else {
+                pieceTaken = getSquare(toSquareCoordinates).getPiece();
+            }
+        }
 
-        if(piece.getCanJump()){}
-
+//      Check for a castling move
         if(piece.isCastlingMove()){}
 
+//      Check for pawn promotion.
         if(piece.isPromotionMove()){}
 
+//      Complete the actual move.
         board[toSquareCoordinates[0]][toSquareCoordinates[1]].setPiece(piece);
         board[fromSquareCoordinates[0]][fromSquareCoordinates[1]].setPiece(null);
+
+        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
 
         activePlayer = (activePlayer + 1) % 2;
         return true;
@@ -130,10 +153,10 @@ public class GameBoard {
     public Square getSquare(int i, int j){
         return board[i][j];
     }
+
     public Square getSquare(int[] coordinates){
         return board[coordinates[0]][coordinates[1]];
     }
-
     private int[] getSquareCoordinates(String squareButton) {
         int temp = Integer.parseInt(squareButton);
         int[] coordinates = new int[2];
@@ -149,5 +172,8 @@ public class GameBoard {
 
     public void setActivePlayer(int activePlayer) {
         this.activePlayer = activePlayer;
+    }
+
+    private void writeMove(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece, Piece pieceTaken) {
     }
 }
