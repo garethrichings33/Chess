@@ -45,10 +45,10 @@ public abstract class Piece {
         return visitedSquares;
     }
     public boolean targetSquareValid(int[] targetSquare, ArrayList<int[]> validTargetSquares){
-        for(int[] vector : validTargetSquares)
-            if (Arrays.equals(targetSquare, vector))
+        for(int[] square : validTargetSquares){
+            if (Arrays.equals(targetSquare, square))
                 return true;
-
+        }
         return false;
     }
     public boolean onGrid(int[] square) {
