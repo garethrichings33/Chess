@@ -11,22 +11,29 @@ public class KnightPiece extends Piece{
         super(pieceColour, iconResourceNames.get(pieceColour));
         setCanJump(true);
         setTakingOnlyMove(false);
+        setCastlingMove(false);
+        setPromotionMove(false);
     }
 
     @Override
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
-        setCastlingMove(false);
-        setPromotionMove(false);
-        return false;
+        var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
+        System.out.println("hello");
+        return targetSquareValid(finalSquare, allowedFinalSquares);
     }
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        return null;
+        ArrayList<int[]> allowedSquares = new ArrayList<>();
+        int[][] steps = {{2, 1}, {-2, 1}, {1, 2}, {-1, 2}, {-2, -1}, {2, -1}, {-1, -2}, {1, -2}};
+        int[] square;
+        for(int i = 0; i < steps.length; i++){
+            square = Vectors.sum(initialSquare, steps[i]);
+            if(onGrid(square))
+                allowedSquares.add(square);
+        }
+
+        return allowedSquares;
     }
 
-    @Override
-    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
-        return null;
-    }
 }

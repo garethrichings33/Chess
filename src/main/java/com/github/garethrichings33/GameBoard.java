@@ -107,8 +107,8 @@ public class GameBoard {
             return false;
 
 //      Check path is clear for move for non-jumping pieces.
-        ArrayList<int[]> visitedSquares = piece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
         if(!piece.getCanJump()){
+            ArrayList<int[]> visitedSquares = piece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
             for(var visitedSquare : visitedSquares)
                 if(getSquare(visitedSquare).getPiece() != null)
                     return false;
