@@ -18,7 +18,6 @@ public class KnightPiece extends Piece{
     @Override
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
         var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
-        System.out.println("hello");
         return targetSquareValid(finalSquare, allowedFinalSquares);
     }
 
