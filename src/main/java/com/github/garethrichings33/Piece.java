@@ -32,6 +32,18 @@ public abstract class Piece {
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
     protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
+    protected ArrayList<int[]> checkFinalSquares(int[] initialSquare, int[][] steps){
+        ArrayList<int[]> squares = new ArrayList<>();
+        int[] square;
+        for(int i = 0; i < steps.length; i++) {
+            square = Arrays.copyOf(initialSquare, initialSquare.length);
+            while (onGrid(Vectors.sum(square, steps[i]))) {
+                square = Vectors.sum(square, steps[i]);
+                squares.add(square);
+            }
+        }
+        return squares;
+    }
     public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare){
         int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
         int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);

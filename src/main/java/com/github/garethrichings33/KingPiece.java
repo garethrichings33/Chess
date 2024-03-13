@@ -21,8 +21,6 @@ public class KingPiece extends Piece{
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
         var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
         boolean validMove = targetSquareValid(finalSquare, allowedFinalSquares);
-        System.out.println("final: " + finalSquare[0] + " , " + finalSquare[1]);
-        System.out.println(validMove);
 
         setCastlingMove(false);
         return validMove;

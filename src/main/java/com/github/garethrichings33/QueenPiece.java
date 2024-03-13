@@ -1,6 +1,7 @@
 package com.github.garethrichings33;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class QueenPiece extends Piece{
@@ -11,22 +12,19 @@ public class QueenPiece extends Piece{
         super(pieceColour, iconResourceNames.get(pieceColour));
         setCanJump(false);
         setTakingOnlyMove(false);
+        setCastlingMove(false);
+        setPromotionMove(false);
     }
 
     @Override
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
-        setCastlingMove(false);
-        setPromotionMove(false);
-        return false;
+        var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
+        return targetSquareValid(finalSquare, allowedFinalSquares);
     }
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        return null;
-    }
-
-    @Override
-    public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare) {
-        return null;
+        int[][] steps = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        return checkFinalSquares(initialSquare, steps);
     }
 }

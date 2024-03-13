@@ -29,18 +29,7 @@ public class BishopPiece extends Piece{
 
     @Override
     protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        ArrayList<int[]> allowedSquares = new ArrayList<>();
-
         int[][] steps = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-        int[] square;
-        for(int i = 0; i < 4; i++) {
-            square = Arrays.copyOf(initialSquare, initialSquare.length);
-            while (onGrid(Vectors.sum(square, steps[i]))) {
-                square = Vectors.sum(square, steps[i]);
-                allowedSquares.add(square);
-            }
-        }
-
-        return allowedSquares;
+        return checkFinalSquares(initialSquare, steps);
     }
 }
