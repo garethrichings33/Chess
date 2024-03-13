@@ -6,12 +6,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ChessGUI extends JFrame implements ActionListener {
-    private Board board;
+    private GameBoard gameBoard;
     private JPanel boardPanel;
     private JButton[][] squareButtons;
+    String fromButton;
+    String toButton;
 
     public ChessGUI(){
-        board = new Board();
+        gameBoard = new GameBoard();
 
         setTitle("Chess");
         setSize(800, 800);
@@ -19,6 +21,9 @@ public class ChessGUI extends JFrame implements ActionListener {
         setLayout(new GridBagLayout());
 
         addPanels();
+
+        fromButton = "";
+        toButton = "";
 
         setVisible(true);
     }
@@ -43,7 +48,7 @@ public class ChessGUI extends JFrame implements ActionListener {
         GridBagConstraints gbc;
         JLabel rowLabel;
         JLabel columnLabel;
-        JButton square;
+        JButton squareButton;
 
         for(int i = 0; i < 8; i++){
             rowLabel = new JLabel(Integer.toString(8 - i));
@@ -56,21 +61,22 @@ public class ChessGUI extends JFrame implements ActionListener {
             panel.add(rowLabel, gbc);
 
             for(int j = 0; j < 8; j++){
-                square = new JButton();
-                square.addActionListener(this);
-                square.setPreferredSize(squareSize);
-                if(board.getSquare(i, j).getSquareColour() == SquareColour.BLACK)
-                    square.setBackground(Color.BLACK);
+                squareButton = new JButton();
+                squareButton.setActionCommand(Integer.toString(i) + Integer.toString(j));
+                squareButton.addActionListener(this);
+                squareButton.setPreferredSize(squareSize);
+                if(gameBoard.getSquare(i, j).getSquareColour() == SquareColour.BLACK)
+                    squareButton.setBackground(new Color(153, 46, 39));
                 else
-                    square.setBackground(Color.WHITE);
+                    squareButton.setBackground(Color.WHITE);
                 gbc = new GridBagConstraints();
                 gbc.fill = GridBagConstraints.NONE;
                 gbc.gridx = j + 1;
                 gbc.gridy = i;
                 gbc.insets = new Insets(-2,-2,-2,-2);
-                panel.add(square, gbc);
+                panel.add(squareButton, gbc);
 
-                squareButtons[i][j] = square;
+                squareButtons[i][j] = squareButton;
             }
         }
 
@@ -86,21 +92,41 @@ public class ChessGUI extends JFrame implements ActionListener {
             panel.add(columnLabel,gbc);
         }
 
-        addPieces();
+        placePieces();
         panel.revalidate();
         panel.repaint();
         return panel;
     }
 
-    private void addPieces(){
+    private void placePieces(){
         for(int i = 0; i < 8; i++)
             for(int j = 0; j < 8; j++)
-                if(board.getSquare(i, j).getPiece() != null)
-                    squareButtons[i][j].setIcon(new ImageIcon(board.getSquare(i, j).getPiece().getPieceIcon()));
+                if(gameBoard.getSquare(i, j).getPiece() != null)
+                    squareButtons[i][j].setIcon(new ImageIcon(gameBoard.getSquare(i, j).getPiece().getPieceIcon()));
+                else
+                    squareButtons[i][j].setIcon(null);
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent action) {
+        var buttonPressed = action.getActionCommand();
 
+        if(fromButton.equals(""))
+            fromButton = buttonPressed;
+        else {
+            toButton = buttonPressed;
+            if(gameBoard.movePiece(fromButton, toButton))
+                placePieces();
+            else{
+                invalidMoveWarning();
+            }
+            fromButton = "";
+            toButton = "";
+        }
+    }
+
+    private void invalidMoveWarning() {
+        JOptionPane.showMessageDialog(this,
+                "Invalid move. Please try again.");
     }
 }

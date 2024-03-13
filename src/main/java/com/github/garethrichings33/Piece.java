@@ -4,35 +4,68 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public abstract class Piece {
-    protected Image pieceIcon;
+    private final Image pieceIcon;
     protected String iconResourceName;
+    private final PieceColour colour;
+    private boolean canJump;
+    private boolean isTakingMove;
+    private boolean isCastlingMove;
+    private boolean isPromotionMove;
 
-    protected final PieceColour colour;
     public Piece(PieceColour colour, String iconResourcename) {
+        Image tempIcon;
         this.colour = colour;
+        this.iconResourceName = iconResourcename;
         try {
-            if(colour == PieceColour.WHITE)
-                this.iconResourceName = "/Chess_klt60.png";
-            else
-                this.iconResourceName = "/Chess_kdt60.png";
-
-            pieceIcon = new ImageIcon(ImageIO.read(KingPiece.class.getResourceAsStream(this.iconResourceName)))
+            tempIcon = new ImageIcon(ImageIO.read(Piece.class.getResourceAsStream(this.iconResourceName)))
                     .getImage();
         }
         catch(IOException excp){
-            pieceIcon = new ImageIcon().getImage();
+            tempIcon = new ImageIcon().getImage();
         }
+        this.pieceIcon = tempIcon;
     }
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
+    protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
+    public boolean targetSquareValid(int[] targetSquare, ArrayList<int[]> validTargetSquares){
+        for(int[] vector : validTargetSquares)
+            if (Vectors.areEqual(targetSquare, vector))
+                return true;
 
+        return false;
+    }
+    public boolean getCanJump(){
+        return canJump;
+    };
+    public void setCanJump(boolean canJump){
+        this.canJump = canJump;
+    }
     public Image getPieceIcon() {
         return pieceIcon;
     }
-
     public PieceColour getColour() {
         return colour;
+    }
+    public boolean isTakingMove() {
+        return isTakingMove;
+    }
+    public void setTakingMove(boolean takingMove) {
+        isTakingMove = takingMove;
+    }
+    public boolean isCastlingMove() {
+        return isCastlingMove;
+    }
+    public void setCastlingMove(boolean castlingMove) {
+        isCastlingMove = castlingMove;
+    }
+    public boolean isPromotionMove() {
+        return isPromotionMove;
+    }
+    public void setPromotionMove(boolean promotionMove) {
+        isPromotionMove = promotionMove;
     }
 }

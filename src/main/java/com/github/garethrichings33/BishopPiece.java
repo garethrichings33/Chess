@@ -1,17 +1,30 @@
 package com.github.garethrichings33;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class BishopPiece extends Piece{
-    private static HashMap<Enum, String> iconResourceNames = new HashMap<>()
-    {{put(PieceColour.BLACK, "/Chess_bdt60.png");
+    private static final HashMap<PieceColour, String> iconResourceNames = new HashMap<>()
+        {{put(PieceColour.BLACK, "/Chess_bdt60.png");
         put(PieceColour.WHITE, "/Chess_blt60.png");}};
-    public BishopPiece(PieceColour colour) {
-        super(colour, iconResourceNames.get(colour));
+
+    SquareColour squareColour;
+    public BishopPiece(PieceColour pieceColour, SquareColour squareColour) {
+        super(pieceColour, iconResourceNames.get(pieceColour));
+        this.squareColour = squareColour;
+        setCanJump(false);
+        setTakingMove(true);
     }
 
     @Override
     public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
+        setCastlingMove(false);
+        setPromotionMove(false);
         return false;
+    }
+
+    @Override
+    protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
+        return null;
     }
 }
