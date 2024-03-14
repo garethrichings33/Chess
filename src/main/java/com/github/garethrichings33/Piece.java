@@ -18,11 +18,14 @@ public abstract class Piece {
     private int numberOfMoves;
     private String currentSquare;
 
-    public Piece(PieceColour colour, String iconResourcename, String currentSquare) {
+    private final String pieceName;
+
+    public Piece(PieceColour colour, String iconResourcename, String currentSquare, String pieceName) {
         Image tempIcon;
         this.colour = colour;
         this.iconResourceName = iconResourcename;
         this.currentSquare = currentSquare;
+        this.pieceName = pieceName;
         try {
             tempIcon = new ImageIcon(ImageIO.read(Piece.class.getResourceAsStream(this.iconResourceName)))
                     .getImage();
@@ -35,6 +38,7 @@ public abstract class Piece {
     }
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
+
     protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
     protected ArrayList<int[]> checkFinalSquares(int[] initialSquare, int[][] steps){
         ArrayList<int[]> squares = new ArrayList<>();
@@ -111,5 +115,8 @@ public abstract class Piece {
     }
     public void setCurrentSquare(String currentSquare) {
         this.currentSquare = currentSquare;
+    }
+    public String getPieceName() {
+        return pieceName;
     }
 }

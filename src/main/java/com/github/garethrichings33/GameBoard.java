@@ -44,30 +44,6 @@ public class GameBoard {
                     board[i][j] = new Square(SquareColour.BLACK, coordinates);
             }
     }
-    private void createPieces() {
-        pieces.put("Black_King", new KingPiece(PieceColour.BLACK, "04"));
-        pieces.put("White_King", new KingPiece(PieceColour.WHITE, "74"));
-        pieces.put("Black_Queen", new QueenPiece(PieceColour.BLACK, "03"));
-        pieces.put("White_Queen", new QueenPiece(PieceColour.WHITE, "73"));
-        pieces.put("Black_Kings_Bishop", new BishopPiece(PieceColour.BLACK, SquareColour.BLACK, "05"));
-        pieces.put("Black_Queens_Bishop", new BishopPiece(PieceColour.BLACK, SquareColour.WHITE, "02"));
-        pieces.put("White_Queens_Bishop", new BishopPiece(PieceColour.WHITE, SquareColour.BLACK, "75"));
-        pieces.put("White_Kings_Bishop", new BishopPiece(PieceColour.WHITE, SquareColour.WHITE, "72"));
-        pieces.put("Black_Kings_Knight", new KnightPiece(PieceColour.BLACK, "06"));
-        pieces.put("Black_Queens_Knight", new KnightPiece(PieceColour.BLACK, "01"));
-        pieces.put("White_Kings_Knight", new KnightPiece(PieceColour.WHITE, "71"));
-        pieces.put("White_Queens_Knight", new KnightPiece(PieceColour.WHITE, "76"));
-        pieces.put("Black_Kings_Rook", new RookPiece(PieceColour.BLACK, "07"));
-        pieces.put("Black_Queens_Rook", new RookPiece(PieceColour.BLACK, "00"));
-        pieces.put("White_Kings_Rook", new RookPiece(PieceColour.WHITE, "70"));
-        pieces.put("White_Queens_Rook", new RookPiece(PieceColour.WHITE, "77"));
-        for(int i = 0; i < 8; i++){
-            pieces.put("Black_Pawn_" + Character.toString((char)(65+i)),
-                    new PawnPiece(PieceColour.BLACK, "1" + i));
-            pieces.put("White_Pawn_" + Character.toString((char)(65+i)),
-                    new PawnPiece(PieceColour.WHITE, "6" + i));
-        }
-    }
     private void addPieces() {
         int blackPlayerIndex;
         if(players[0].getPieceColour() == PieceColour.BLACK)
@@ -170,6 +146,8 @@ public class GameBoard {
 
         if(returnMove != MoveTypes.INVALID) {
             moves.push(new Move(activePlayer, piece, pieceTaken, fromButton, toButton, returnMove, inCheck));
+            if(pieceTaken != null)
+                players[activePlayer].removePiece(pieceTaken.getPieceName());
             piece.incrementMoves();
             players[inactivePlayer].setInCheck(isPlayerChecked());
             activePlayer = (activePlayer + 1) % 2;
@@ -183,6 +161,7 @@ public class GameBoard {
         int[] kingSquareCoords = getSquareCoordinates(players[inactivePlayer]
                 .getPiece("King")
                 .getCurrentSquare());
+        var activePieces = players[activePlayer].getPieces();
         return false;
     }
 
@@ -216,21 +195,22 @@ public class GameBoard {
         String pieceName = chosenPieceType + "_" + player.getNumberOfPromotions();
         switch (chosenPieceType){
             case "Queen":
-                promotedPiece = new QueenPiece(player.getPieceColour(), toSquareButton);
+                promotedPiece = new QueenPiece(player.getPieceColour(), toSquareButton, pieceName);
                 break;
             case "Bishop":
                 promotedPiece = new BishopPiece(player.getPieceColour(),
-                        board[toCoordinates[0]][toCoordinates[1]].getSquareColour(), toSquareButton);
+                        board[toCoordinates[0]][toCoordinates[1]].getSquareColour(), toSquareButton, pieceName);
                 break;
             case "Rook":
-                promotedPiece = new RookPiece(player.getPieceColour(), toSquareButton);
+                promotedPiece = new RookPiece(player.getPieceColour(), toSquareButton, pieceName);
                 break;
             case "Knight":
-                promotedPiece = new KnightPiece(player.getPieceColour(), toSquareButton);
+                promotedPiece = new KnightPiece(player.getPieceColour(), toSquareButton, pieceName);
                 break;
         }
         player.addPiece(pieceName, promotedPiece);
         board[toCoordinates[0]][toCoordinates[1]].setPiece(player.getPiece(pieceName));
+        player.removePiece(board[fromCoordinates[0]][fromCoordinates[1]].getPiece().getPieceName());
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(null);
     }
     private boolean isEnPassant(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
@@ -266,6 +246,7 @@ public class GameBoard {
         int[] takenSquareCoords = getSquareCoordinates(lastMove.getFinalSquare());
         board[toSquareCoordinates[0]][toSquareCoordinates[1]].setPiece(piece);
         board[fromSquareCoordinates[0]][fromSquareCoordinates[1]].setPiece(null);
+        players[activePlayer].removePiece(board[takenSquareCoords[0]][takenSquareCoords[1]].getPiece().getPieceName());
         board[takenSquareCoords[0]][takenSquareCoords[1]].setPiece(null);
     }
     public int getActivePlayer() {

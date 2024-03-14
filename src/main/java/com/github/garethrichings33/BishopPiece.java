@@ -10,8 +10,8 @@ public class BishopPiece extends Piece{
         put(PieceColour.WHITE, "/Chess_blt60.png");}};
 
     SquareColour squareColour;
-    public BishopPiece(PieceColour pieceColour, SquareColour squareColour, String currentSquare) {
-        super(pieceColour, iconResourceNames.get(pieceColour), currentSquare);
+    public BishopPiece(PieceColour pieceColour, SquareColour squareColour, String currentSquare, String pieceName) {
+        super(pieceColour, iconResourceNames.get(pieceColour), currentSquare, pieceName);
         this.squareColour = squareColour;
         setCanJump(false);
         setCastlingMove(false);
