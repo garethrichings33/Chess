@@ -8,8 +8,8 @@ public class QueenPiece extends Piece{
     private static final HashMap<PieceColour, String> iconResourceNames = new HashMap<>()
         {{put(PieceColour.BLACK, "/Chess_qdt60.png");
         put(PieceColour.WHITE, "/Chess_qlt60.png");}};
-    public QueenPiece(PieceColour pieceColour) {
-        super(pieceColour, iconResourceNames.get(pieceColour));
+    public QueenPiece(PieceColour pieceColour, String currentSquare) {
+        super(pieceColour, iconResourceNames.get(pieceColour), currentSquare);
         setCanJump(false);
         setTakingOnlyMove(false);
         setCastlingMove(false);

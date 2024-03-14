@@ -7,8 +7,8 @@ public class RookPiece extends Piece{
     private static final HashMap<PieceColour, String> iconResourceNames = new HashMap<>()
      {{put(PieceColour.BLACK, "/Chess_rdt60.png");
         put(PieceColour.WHITE, "/Chess_rlt60.png");}};
-    public RookPiece(PieceColour pieceColour) {
-        super(pieceColour, iconResourceNames.get(pieceColour));
+    public RookPiece(PieceColour pieceColour, String currentSquare) {
+        super(pieceColour, iconResourceNames.get(pieceColour), currentSquare);
         setCanJump(false);
         setTakingOnlyMove(false);
         setCastlingMove(false);

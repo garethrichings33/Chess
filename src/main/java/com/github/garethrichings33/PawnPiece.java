@@ -11,8 +11,8 @@ public class PawnPiece extends Piece{
         put(PieceColour.WHITE, "/Chess_plt60.png");}};
     private final int direction;
 
-    public PawnPiece(PieceColour pieceColour) {
-        super(pieceColour, iconResourceNames.get(pieceColour));
+    public PawnPiece(PieceColour pieceColour, String currentSquare) {
+        super(pieceColour, iconResourceNames.get(pieceColour), currentSquare);
         setCanJump(false);
         setCastlingMove(false);
         this.maxMove = 2;

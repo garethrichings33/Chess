@@ -116,7 +116,7 @@ public class ChessGUI extends JFrame implements ActionListener {
             fromButton = buttonPressed;
         else {
             toButton = buttonPressed;
-            moveType = gameBoard.checkMove(fromButton, toButton);
+            moveType = gameBoard.movePiece(fromButton, toButton);
             if(moveType == MoveTypes.INVALID)
                 invalidMoveWarning();
             else {
