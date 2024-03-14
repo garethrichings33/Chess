@@ -14,6 +14,7 @@ public class PawnPiece extends Piece{
     public PawnPiece(PieceColour pieceColour) {
         super(pieceColour, iconResourceNames.get(pieceColour));
         setCanJump(false);
+        setCastlingMove(false);
         this.maxMove = 2;
         if(pieceColour == PieceColour.BLACK) {
             this.direction = 1;
@@ -30,7 +31,6 @@ public class PawnPiece extends Piece{
         if(validMove) {
             setPromotionMove(finalSquare[0] == 0 || finalSquare[0] == 7);
             setTakingOnlyMove(finalSquare[1] != initialSquare[1]);
-            setCastlingMove(false);
             maxMove = 1;
         }
 

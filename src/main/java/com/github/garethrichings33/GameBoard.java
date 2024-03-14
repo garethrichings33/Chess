@@ -2,16 +2,19 @@ package com.github.garethrichings33;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
 
 public class GameBoard {
-
+    private ChessGUI gui;
     private Square[][] board;
     private HashMap<String, Piece> pieces;
     private Player[] players;
     private int activePlayer;
     private ArrayList<String> moveList;
+    private Stack<Move> moves;
 
-    public GameBoard() {
+    public GameBoard(ChessGUI gui) {
+        this.gui = gui;
         board = new Square[8][8];
         initialiseBoard();
 
@@ -21,15 +24,14 @@ public class GameBoard {
 
         initialisePlayers();
         moveList = new ArrayList<>();
+        moves = new Stack<>();
     }
-
     private void initialisePlayers() {
         players = new Player[2];
         players[0] = new Player("Player 1", PieceColour.WHITE);
         players[1] = new Player("Player 2", PieceColour.BLACK);
         activePlayer = 0;
     }
-
     private void initialiseBoard() {
         int[] coordinates = new int[2];
         for(int i = 0; i < 8; i++)
@@ -89,59 +91,114 @@ public class GameBoard {
         }
 
     }
-    public boolean movePiece(String fromButton, String toButton) {
+    public MoveTypes checkMove(String fromButton, String toButton) {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
+        MoveTypes returnMove = MoveTypes.VALID;
 
         var piece = getSquare(fromSquareCoordinates).getPiece();
         if(piece == null)
-            return false;
+            return MoveTypes.INVALID;
 
 //      Check colour of piece matches player's colour
         var pieceColour = piece.getColour();
         if(players[activePlayer].getPieceColour() != pieceColour)
-            return false;
+            return MoveTypes.INVALID;
 
 //      Check move is within scope of the chosen piece.
         if(!piece.moveAllowed(fromSquareCoordinates, toSquareCoordinates))
-            return false;
+            return MoveTypes.INVALID;
 
 //      Check path is clear for move for non-jumping pieces.
         if(!piece.getCanJump()){
             ArrayList<int[]> visitedSquares = piece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
             for(var visitedSquare : visitedSquares)
                 if(getSquare(visitedSquare).getPiece() != null)
-                    return false;
+                    return MoveTypes.INVALID;
         }
-
-//      Check pawn is actually taking a piece when moving diagonally.
-        if(piece.isTakingOnlyMove() && getSquare(toSquareCoordinates).getPiece() == null)
-            return false;
 
 //      Check a taking move. Must take a piece of the opposite colour.
         Piece pieceTaken = null;
         if(getSquare(toSquareCoordinates).getPiece() != null) {
             if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour) {
-                return false;
+                return MoveTypes.INVALID;
             }
             else {
                 pieceTaken = getSquare(toSquareCoordinates).getPiece();
             }
         }
 
+//      Check pawn for en passant.
+        if(pieceTaken == null && piece.isTakingOnlyMove()) {
+            if (isEnPassant(fromSquareCoordinates, toSquareCoordinates)) {
+                enPassantTake(fromSquareCoordinates, toSquareCoordinates, piece);
+                returnMove = MoveTypes.ENPASSANT;
+            }
+            else
+                returnMove = MoveTypes.INVALID;
+        }
+
 //      Check for a castling move
-        if(piece.isCastlingMove()){}
+        if(piece.isCastlingMove()){
+            returnMove = MoveTypes.CASTLE;
+        }
 
 //      Check for pawn promotion.
-        if(piece.isPromotionMove()){}
+        if(piece.isPromotionMove()){
+            gui.promotePawn(fromButton, toButton);
+            returnMove = MoveTypes.PROMOTION;
+        }
 
-//      Complete the actual move.
+//      Complete the actual move if not a special move.
+        piece.incrementMoves();
+        if(returnMove == MoveTypes.VALID) {
+            board[toSquareCoordinates[0]][toSquareCoordinates[1]].setPiece(piece);
+            board[fromSquareCoordinates[0]][fromSquareCoordinates[1]].setPiece(null);
+        }
+
+        moves.push(new Move(piece, pieceTaken, fromButton, toButton, returnMove));
+//        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
+
+        if(returnMove != MoveTypes.INVALID)
+            activePlayer = (activePlayer + 1) % 2;
+
+        return returnMove;
+    }
+
+    private void enPassantTake(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece) {
+        Move lastMove = moves.peek();
+        int[] takenSquareCoords = getSquareCoordinates(lastMove.getFinalSquare());
         board[toSquareCoordinates[0]][toSquareCoordinates[1]].setPiece(piece);
         board[fromSquareCoordinates[0]][fromSquareCoordinates[1]].setPiece(null);
+        board[takenSquareCoords[0]][takenSquareCoords[1]].setPiece(null);
+    }
 
-        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
+    private boolean isEnPassant(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
+        if(moves.isEmpty())
+            return false;
 
-        activePlayer = (activePlayer + 1) % 2;
+        Move lastMove = moves.peek();
+        Piece lastMovedPiece = lastMove.getMovedPiece();
+
+//      Last moved piece must be a pawn.
+        if(lastMovedPiece.getClass() != PawnPiece.class)
+            return false;
+
+//      Last moved piece must only have moved once.
+        if(lastMovedPiece.getNumberOfMoves() != 1)
+            return false;
+
+//      Taking piece must move directly behind the last moved piece.
+        int[] lastMoveFinalCoords = getSquareCoordinates((lastMove.getFinalSquare()));
+        if(lastMoveFinalCoords[0] != fromSquareCoordinates[0] ||
+                Math.abs(lastMoveFinalCoords[1] - fromSquareCoordinates[1]) != 1)
+            return false;
+
+//      Last moved piece must have moved 2 squares.
+        int[] lastMoveInitialCoords = getSquareCoordinates((lastMove.getInitialSquare()));
+        if(Math.abs(lastMoveFinalCoords[0] - lastMoveInitialCoords[0]) != 2)
+            return false;
+
         return true;
     }
 
@@ -166,14 +223,41 @@ public class GameBoard {
         return coordinates;
     }
 
+    private void writeMove(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece, Piece pieceTaken) {
+    }
+
+    public void pawnPromotion(String fromSquareButton, String toSquareButton, String chosenPieceType) {
+        int[] toCoordinates = getSquareCoordinates(toSquareButton);
+        int[] fromCoordinates = getSquareCoordinates(fromSquareButton);
+
+        Piece promotedPiece = null;
+        Player player = players[activePlayer];
+        player.addPromotion();
+        String pieceName = player.getPieceColourString() + player.getNumberOfPromotions() + "_" + chosenPieceType;
+        switch (chosenPieceType){
+            case "Queen":
+                promotedPiece = new QueenPiece(player.getPieceColour());
+                break;
+            case "Bishop":
+                promotedPiece = new BishopPiece(player.getPieceColour(), board[toCoordinates[0]][toCoordinates[1]].getSquareColour());
+                break;
+            case "Rook":
+                promotedPiece = new RookPiece(player.getPieceColour());
+                break;
+            case "Knight":
+                promotedPiece = new KnightPiece(player.getPieceColour());
+                break;
+        }
+        pieces.put(pieceName, promotedPiece);
+        board[toCoordinates[0]][toCoordinates[1]].setPiece(pieces.get(pieceName));
+        board[fromCoordinates[0]][fromCoordinates[1]].setPiece(null);
+    }
+
     public int getActivePlayer() {
         return activePlayer;
     }
 
     public void setActivePlayer(int activePlayer) {
         this.activePlayer = activePlayer;
-    }
-
-    private void writeMove(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece, Piece pieceTaken) {
     }
 }

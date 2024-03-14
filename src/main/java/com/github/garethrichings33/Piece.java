@@ -15,6 +15,7 @@ public abstract class Piece {
     private boolean isTakingOnlyMove;
     private boolean isCastlingMove;
     private boolean isPromotionMove;
+    private int numberOfMoves;
 
     public Piece(PieceColour colour, String iconResourcename) {
         Image tempIcon;
@@ -28,9 +29,11 @@ public abstract class Piece {
             tempIcon = new ImageIcon().getImage();
         }
         this.pieceIcon = tempIcon;
+        this.numberOfMoves = 0;
     }
 
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
+
     protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
     protected ArrayList<int[]> checkFinalSquares(int[] initialSquare, int[][] steps){
         ArrayList<int[]> squares = new ArrayList<>();
@@ -95,5 +98,11 @@ public abstract class Piece {
     }
     public void setPromotionMove(boolean promotionMove) {
         isPromotionMove = promotionMove;
+    }
+    public int getNumberOfMoves() {
+        return numberOfMoves;
+    }
+    public void incrementMoves(){
+        numberOfMoves++;
     }
 }

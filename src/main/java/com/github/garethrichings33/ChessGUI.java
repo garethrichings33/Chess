@@ -13,7 +13,7 @@ public class ChessGUI extends JFrame implements ActionListener {
     String toButton;
 
     public ChessGUI(){
-        gameBoard = new GameBoard();
+        gameBoard = new GameBoard(this);
 
         setTitle("Chess");
         setSize(800, 800);
@@ -110,19 +110,28 @@ public class ChessGUI extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent action) {
         var buttonPressed = action.getActionCommand();
+        MoveTypes moveType;
 
         if(fromButton.equals(""))
             fromButton = buttonPressed;
         else {
             toButton = buttonPressed;
-            if(gameBoard.movePiece(fromButton, toButton))
-                placePieces();
-            else{
+            moveType = gameBoard.checkMove(fromButton, toButton);
+            if(moveType == MoveTypes.INVALID)
                 invalidMoveWarning();
+            else {
+                placePieces();
             }
             fromButton = "";
             toButton = "";
         }
+    }
+
+    public void promotePawn(String fromButton, String toButton) {
+        String[] options = {"Queen", "Bishop", "Knight", "Rook"};
+        String chosenPiece = JOptionPane.showInputDialog(this, "Choose piece",
+                "Queen", JOptionPane.PLAIN_MESSAGE, null, options, options[0]).toString();
+        gameBoard.pawnPromotion(fromButton, toButton, chosenPiece);
     }
 
     private void invalidMoveWarning() {
