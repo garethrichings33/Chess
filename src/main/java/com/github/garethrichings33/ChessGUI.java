@@ -138,4 +138,9 @@ public class ChessGUI extends JFrame implements ActionListener {
         JOptionPane.showMessageDialog(this,
                 "Invalid move. Please try again.");
     }
+
+    public void checkMessage() {
+        JOptionPane.showMessageDialog(this,
+                "Check");
+    }
 }

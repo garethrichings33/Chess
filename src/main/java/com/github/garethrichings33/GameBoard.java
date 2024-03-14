@@ -139,6 +139,7 @@ public class GameBoard {
 //      Complete the actual move if not a special move.
         if(returnMove == MoveTypes.VALID) {
             board[toSquareCoordinates[0]][toSquareCoordinates[1]].setPiece(piece);
+            players[activePlayer].getPiece(piece.getPieceName()).setCurrentSquare(toButton);
             board[fromSquareCoordinates[0]][fromSquareCoordinates[1]].setPiece(null);
         }
 
@@ -147,9 +148,12 @@ public class GameBoard {
         if(returnMove != MoveTypes.INVALID) {
             moves.push(new Move(activePlayer, piece, pieceTaken, fromButton, toButton, returnMove, inCheck));
             if(pieceTaken != null)
-                players[activePlayer].removePiece(pieceTaken.getPieceName());
+                players[inactivePlayer].removePiece(pieceTaken.getPieceName());
             piece.incrementMoves();
-            players[inactivePlayer].setInCheck(isPlayerChecked());
+            if(isPlayerChecked()) {
+                players[inactivePlayer].setInCheck(true);
+                gui.checkMessage();
+            }
             activePlayer = (activePlayer + 1) % 2;
             inactivePlayer = (inactivePlayer + 1) % 2;
         }
@@ -158,10 +162,26 @@ public class GameBoard {
     }
 
     private boolean isPlayerChecked() {
-        int[] kingSquareCoords = getSquareCoordinates(players[inactivePlayer]
+        var kingSquareCoords = getSquareCoordinates(players[inactivePlayer]
                 .getPiece("King")
                 .getCurrentSquare());
-        var activePieces = players[activePlayer].getPieces();
+        var activePlayerPieceNames = players[activePlayer].getPieceNames();
+
+        Piece piece;
+        int[] currentPieceCoords;
+        boolean canPieceTakeKing;
+        for(var pieceName : activePlayerPieceNames){
+            piece = players[activePlayer].getPiece(pieceName);
+            currentPieceCoords = getSquareCoordinates(piece.getCurrentSquare());
+            canPieceTakeKing = piece.moveAllowed(currentPieceCoords, kingSquareCoords);
+            if(canPieceTakeKing && !piece.getCanJump()) {
+                ArrayList<int[]> visitedSquares = piece.getVisitedSquares(currentPieceCoords, kingSquareCoords);
+                for (var visitedSquare : visitedSquares)
+                    canPieceTakeKing = canPieceTakeKing && getSquare(visitedSquare).getPiece() == null;
+            }
+            if(canPieceTakeKing)
+                return true;
+        }
         return false;
     }
 

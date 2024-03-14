@@ -1,7 +1,8 @@
 package com.github.garethrichings33;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
+
 
 public class Player {
     private String name;
@@ -87,7 +88,7 @@ public class Player {
     public void removePiece(String pieceName){
         pieces.remove(pieceName);
     }
-    public HashMap<String, Piece> getPieces(){
-        return pieces;
+    public Set<String> getPieceNames(){
+        return pieces.keySet();
     }
 }
