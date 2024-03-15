@@ -7,7 +7,7 @@ public class KnightPiece extends Piece{
     private static final HashMap<PieceColour, String> iconResourceNames = new HashMap<>()
         {{put(PieceColour.BLACK, "/Chess_ndt60.png");
         put(PieceColour.WHITE, "/Chess_nlt60.png");}};
-    public KnightPiece(PieceColour pieceColour, String currentSquare, String pieceName) {
+    public KnightPiece(PieceColour pieceColour, int[] currentSquare, String pieceName) {
         super(pieceColour, iconResourceNames.get(pieceColour), currentSquare, pieceName);
         setCanJump(true);
         setTakingOnlyMove(false);

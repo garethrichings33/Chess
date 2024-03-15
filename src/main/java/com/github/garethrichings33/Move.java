@@ -4,12 +4,12 @@ public class Move {
     private final int player;
     private final Piece movedPiece;
     private final Piece takenPiece;
-    private final String initialSquare;
-    private final String finalSquare;
+    private final int[] initialSquare;
+    private final int[] finalSquare;
     private final MoveTypes movetype;
 
     private final boolean check;
-    public Move(int player, Piece movedPiece, Piece takenPiece, String initialSquare, String finalSquare, MoveTypes movetype, boolean check) {
+    public Move(int player, Piece movedPiece, Piece takenPiece, int[] initialSquare, int[] finalSquare, MoveTypes movetype, boolean check) {
         this.player = player;
         this.movedPiece = movedPiece;
         this.takenPiece = takenPiece;
@@ -24,10 +24,10 @@ public class Move {
     public Piece getTakenPiece() {
         return takenPiece;
     }
-    public String getInitialSquare() {
+    public int[] getInitialSquare() {
         return initialSquare;
     }
-    public String getFinalSquare() {
+    public int[] getFinalSquare() {
         return finalSquare;
     }
     public MoveTypes getMovetype() {

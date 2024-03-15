@@ -10,7 +10,7 @@ public class KingPiece extends Piece{
         {{put(PieceColour.BLACK, "/Chess_kdt60.png");
         put(PieceColour.WHITE, "/Chess_klt60.png");}};
 
-    public KingPiece(PieceColour pieceColour, String currentSquare, String pieceName) {
+    public KingPiece(PieceColour pieceColour, int[] currentSquare, String pieceName) {
         super(pieceColour,iconResourceNames.get(pieceColour), currentSquare, pieceName);
         setCanJump(false);
         setPromotionMove(false);

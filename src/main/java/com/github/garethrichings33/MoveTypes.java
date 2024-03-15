@@ -5,5 +5,7 @@ public enum MoveTypes {
     INVALID,
     CASTLE,
     PROMOTION,
-    ENPASSANT
+    ENPASSANT,
+    CHECK,
+    CHECKMATE
 }

@@ -16,11 +16,11 @@ public abstract class Piece {
     private boolean isCastlingMove;
     private boolean isPromotionMove;
     private int numberOfMoves;
-    private String currentSquare;
+    private int[] currentSquare;
 
     private final String pieceName;
 
-    public Piece(PieceColour colour, String iconResourcename, String currentSquare, String pieceName) {
+    public Piece(PieceColour colour, String iconResourcename, int[] currentSquare, String pieceName) {
         Image tempIcon;
         this.colour = colour;
         this.iconResourceName = iconResourcename;
@@ -110,10 +110,10 @@ public abstract class Piece {
     public void incrementMoves(){
         numberOfMoves++;
     }
-    public String getCurrentSquare() {
+    public int[] getCurrentSquare() {
         return currentSquare;
     }
-    public void setCurrentSquare(String currentSquare) {
+    public void setCurrentSquare(int[] currentSquare) {
         this.currentSquare = currentSquare;
     }
     public String getPieceName() {

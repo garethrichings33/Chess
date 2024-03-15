@@ -6,14 +6,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ChessGUI extends JFrame implements ActionListener {
-    private GameBoard gameBoard;
+    private GamePlay gamePlay;
     private JPanel boardPanel;
     private JButton[][] squareButtons;
     String fromButton;
     String toButton;
 
     public ChessGUI(){
-        gameBoard = new GameBoard(this);
+        gamePlay = new GamePlay(this);
 
         setTitle("Chess");
         setSize(800, 800);
@@ -65,7 +65,7 @@ public class ChessGUI extends JFrame implements ActionListener {
                 squareButton.setActionCommand(Integer.toString(i) + Integer.toString(j));
                 squareButton.addActionListener(this);
                 squareButton.setPreferredSize(squareSize);
-                if(gameBoard.getSquare(i, j).getSquareColour() == SquareColour.BLACK)
+                if(gamePlay.getSquare(i, j).getSquareColour() == SquareColour.BLACK)
                     squareButton.setBackground(new Color(153, 46, 39));
                 else
                     squareButton.setBackground(Color.WHITE);
@@ -101,8 +101,8 @@ public class ChessGUI extends JFrame implements ActionListener {
     private void placePieces(){
         for(int i = 0; i < 8; i++)
             for(int j = 0; j < 8; j++)
-                if(gameBoard.getSquare(i, j).getPiece() != null)
-                    squareButtons[i][j].setIcon(new ImageIcon(gameBoard.getSquare(i, j).getPiece().getPieceIcon()));
+                if(gamePlay.getSquare(i, j).getPiece() != null)
+                    squareButtons[i][j].setIcon(new ImageIcon(gamePlay.getSquare(i, j).getPiece().getPieceIcon()));
                 else
                     squareButtons[i][j].setIcon(null);
     }
@@ -116,22 +116,24 @@ public class ChessGUI extends JFrame implements ActionListener {
             fromButton = buttonPressed;
         else {
             toButton = buttonPressed;
-            moveType = gameBoard.movePiece(fromButton, toButton);
+            moveType = gamePlay.movePiece(fromButton, toButton);
             if(moveType == MoveTypes.INVALID)
                 invalidMoveWarning();
             else {
                 placePieces();
+                if(moveType == MoveTypes.CHECK)
+                    checkMessage();
             }
             fromButton = "";
             toButton = "";
         }
     }
 
-    public void promotePawn(String fromButton, String toButton) {
+    public void promotePawn(int[] fromCoordinates, int[] toCoordinates) {
         String[] options = {"Queen", "Bishop", "Knight", "Rook"};
         String chosenPiece = JOptionPane.showInputDialog(this, "Choose piece",
                 "Queen", JOptionPane.PLAIN_MESSAGE, null, options, options[0]).toString();
-        gameBoard.pawnPromotion(fromButton, toButton, chosenPiece);
+        gamePlay.pawnPromotion(fromCoordinates, toCoordinates, chosenPiece);
     }
 
     private void invalidMoveWarning() {
