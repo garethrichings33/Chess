@@ -108,7 +108,6 @@ public class GamePlay {
 
 //      Check a taking move. Must take a piece of the opposite colour.
         Piece pieceTaken = null;
-        System.out.println(piece.getPieceName() + " , " + piece.isTakingMove());
         if(getSquare(toSquareCoordinates).getPiece() != null) {
             if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour ||  !piece.isTakingMove()) {
                 return MoveTypes.INVALID;
@@ -131,8 +130,26 @@ public class GamePlay {
         }
 
 //      Check for a castling move
+        System.out.println(piece.isCastlingMove() + " , " + piece.getNumberOfMoves() + " , " + players[activePlayer].isInCheck());
+        Piece castledRook = null;
+        int[] castledRookSquare = new int[2];
         if(piece.isCastlingMove()){
-            returnMove = MoveTypes.CASTLE;
+            if(pieceTaken != null || players[activePlayer].isInCheck())
+                return MoveTypes.INVALID;
+            castledRook = getCastlingRook(fromSquareCoordinates, toSquareCoordinates);
+            if(castledRook != null)
+                if(castlingPathClear(piece, castledRook)) {
+                    castledRookSquare = getCastledRookSquare(fromSquareCoordinates, toSquareCoordinates);
+                    completeMove(piece, fromSquareCoordinates, castledRookSquare, null, null);
+                    var checked = isPlayerChecked(activePlayer, castledRookSquare, null);
+                    undoMove(piece,fromSquareCoordinates, castledRookSquare, null, null);
+                    if(checked)
+                        return MoveTypes.INVALID;
+
+                    returnMove = MoveTypes.CASTLE;
+                }
+                else
+                    return MoveTypes.INVALID;
         }
 
 //      Check for pawn promotion.
@@ -145,13 +162,18 @@ public class GamePlay {
         }
 
 //      Complete the actual move if not a special move.
-        if(returnMove == MoveTypes.VALID || returnMove == MoveTypes.ENPASSANT || returnMove == MoveTypes.PROMOTION) {
+        if(returnMove == MoveTypes.VALID || returnMove == MoveTypes.ENPASSANT
+                || returnMove == MoveTypes.PROMOTION || returnMove == MoveTypes.CASTLE) {
             completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
             if(isPlayerChecked(activePlayer,
                     players[activePlayer].getPiece("King").getCurrentSquare(), pieceTaken)){
                 undoMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
                 returnMove = MoveTypes.INVALID;
             }
+            if(returnMove == MoveTypes.CASTLE)
+                completeMove(castledRook, castledRook.getCurrentSquare(),
+                        castledRookSquare, null, null);
+            players[activePlayer].setInCheck(false);
         }
 
 //        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
@@ -199,13 +221,16 @@ public class GamePlay {
         }
         return false;
     }
+
     private ArrayList getPath(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         var path = new ArrayList<Square>();
         return path;
     }
+
     public Square getSquare(int i, int j){
         return board[i][j];
     }
+
     public Square getSquare(int[] coordinates){
         return board[coordinates[0]][coordinates[1]];
     }
@@ -277,7 +302,6 @@ public class GamePlay {
         return board[takenSquareCoords[0]][takenSquareCoords[1]].getPiece();
 //        completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoords);
     }
-
     private void completeMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
                                 Piece pieceTaken, int[] takenCoordinates){
 
@@ -289,7 +313,6 @@ public class GamePlay {
         players[activePlayer].getPiece(movedPiece.getPieceName()).setCurrentSquare(toCoordinates);
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(null);
     }
-
     private void undoMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
                           Piece pieceTaken, int[] takenCoordinates){
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(movedPiece);
@@ -303,7 +326,38 @@ public class GamePlay {
     public int getActivePlayer() {
         return activePlayer;
     }
+
     public void setActivePlayer(int activePlayer) {
         this.activePlayer = activePlayer;
+    }
+
+    private Piece getCastlingRook(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
+        String pieceName;
+        if(fromSquareCoordinates[1] < toSquareCoordinates[1])
+            pieceName = "Kings_Rook";
+        else
+            pieceName = "Queens_Rook";
+
+        var piece = players[activePlayer].getPiece(pieceName);
+        if(piece.getNumberOfMoves() != 0)
+            return null;
+        else
+            return piece;
+    }
+    private boolean castlingPathClear(Piece king, Piece castledRook) {
+        var kingsCoords = king.getCurrentSquare();
+        var rookCoords = castledRook.getCurrentSquare();
+        if(kingsCoords[1] < rookCoords[1])
+            return true;
+
+        int[] check = Vectors.sum(rookCoords, new int[]{0 ,1});
+        return(board[check[0]][check[1]].getPiece() == null);
+    }
+    private int[] getCastledRookSquare(int[] fromSquareCoordinates, int[] toSquareCoordinates)
+    {
+        int[] coords = new int[2];
+        coords[0] = fromSquareCoordinates[0];
+        coords[1] = (fromSquareCoordinates[1] + toSquareCoordinates[1])/2;
+        return coords;
     }
 }

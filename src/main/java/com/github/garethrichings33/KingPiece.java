@@ -23,7 +23,7 @@ public class KingPiece extends Piece{
         var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
         boolean validMove = targetSquareValid(finalSquare, allowedFinalSquares);
 
-        setCastlingMove(false);
+        setCastlingMove(Math.abs(finalSquare[1] - initialSquare[1]) == 2);
         return validMove;
     }
 
@@ -39,6 +39,16 @@ public class KingPiece extends Piece{
                 if(onGrid(square) && !Arrays.equals(square, initialSquare)) {
                     allowedSquares.add(square);
                 }
+            }
+        }
+
+        if(getNumberOfMoves() == 0){
+            for(int i : new int[]{-2, 2}){
+                square = new int[2];
+                square[0] = initialSquare[0];
+                square[1] = initialSquare[1] + i;
+                if(onGrid(square))
+                    allowedSquares.add(square);
             }
         }
 
