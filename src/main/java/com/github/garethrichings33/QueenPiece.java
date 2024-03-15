@@ -14,6 +14,7 @@ public class QueenPiece extends Piece{
         setTakingOnlyMove(false);
         setCastlingMove(false);
         setPromotionMove(false);
+        setTakingMove(true);
     }
 
     @Override

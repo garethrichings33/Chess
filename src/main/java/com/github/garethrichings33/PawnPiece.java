@@ -1,7 +1,6 @@
 package com.github.garethrichings33;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class PawnPiece extends Piece{
@@ -29,8 +28,9 @@ public class PawnPiece extends Piece{
         boolean validMove = targetSquareValid(finalSquare, allowedFinalSquares);
 
         if(validMove) {
-            setPromotionMove(finalSquare[0] == 0 || finalSquare[0] == 7);
+            setPromotionMove((finalSquare[0] == 0 || finalSquare[0] == 7));
             setTakingOnlyMove(finalSquare[1] != initialSquare[1]);
+            setTakingMove(finalSquare[1] != initialSquare[1]);
             maxMove = 1;
         }
 

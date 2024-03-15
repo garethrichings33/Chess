@@ -1,6 +1,7 @@
 package com.github.garethrichings33;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -81,6 +82,7 @@ public class GamePlay {
     public MoveTypes movePiece(String fromButton, String toButton) {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
+        int[] takenSquareCoordinates = null;
         MoveTypes returnMove = MoveTypes.VALID;
 
         var piece = getSquare(fromSquareCoordinates).getPiece();
@@ -106,19 +108,22 @@ public class GamePlay {
 
 //      Check a taking move. Must take a piece of the opposite colour.
         Piece pieceTaken = null;
+        System.out.println(piece.getPieceName() + " , " + piece.isTakingMove());
         if(getSquare(toSquareCoordinates).getPiece() != null) {
-            if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour) {
+            if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour ||  !piece.isTakingMove()) {
                 return MoveTypes.INVALID;
             }
             else {
                 pieceTaken = getSquare(toSquareCoordinates).getPiece();
+                takenSquareCoordinates = Arrays.copyOf(toSquareCoordinates, toSquareCoordinates.length);
             }
         }
 
 //      Check pawn for en passant.
         if(pieceTaken == null && piece.isTakingOnlyMove()) {
             if (isEnPassant(fromSquareCoordinates, toSquareCoordinates)) {
-                enPassantTake(fromSquareCoordinates, toSquareCoordinates, piece);
+                pieceTaken = enPassantTake(fromSquareCoordinates, toSquareCoordinates, piece);
+                takenSquareCoordinates = pieceTaken.getCurrentSquare();
                 returnMove = MoveTypes.ENPASSANT;
             }
             else
@@ -131,14 +136,22 @@ public class GamePlay {
         }
 
 //      Check for pawn promotion.
-        if(piece.isPromotionMove()){
-            gui.promotePawn(fromSquareCoordinates, toSquareCoordinates);
+        if(piece.isPromotionMove() && (!piece.isTakingMove() || pieceTaken != null)){
+            var chosenPieceName = gui.promotePawn(fromSquareCoordinates, toSquareCoordinates);
+            pieceTaken = piece;
+            takenSquareCoordinates = Arrays.copyOf(fromSquareCoordinates, fromSquareCoordinates.length);
+            piece = pawnPromotion(fromSquareCoordinates, toSquareCoordinates, chosenPieceName, piece);
             returnMove = MoveTypes.PROMOTION;
         }
 
 //      Complete the actual move if not a special move.
-        if(returnMove == MoveTypes.VALID) {
-            completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, toSquareCoordinates);
+        if(returnMove == MoveTypes.VALID || returnMove == MoveTypes.ENPASSANT || returnMove == MoveTypes.PROMOTION) {
+            completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
+            if(isPlayerChecked(activePlayer,
+                    players[activePlayer].getPiece("King").getCurrentSquare(), pieceTaken)){
+                undoMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
+                returnMove = MoveTypes.INVALID;
+            }
         }
 
 //        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
@@ -147,11 +160,12 @@ public class GamePlay {
             moves.push(new Move(activePlayer, piece, pieceTaken, fromSquareCoordinates, toSquareCoordinates, returnMove, inCheck));
             if(pieceTaken != null)
                 players[inactivePlayer].removePiece(pieceTaken.getPieceName());
-            piece.incrementMoves();
-            if(isPlayerChecked(inactivePlayer, players[inactivePlayer].getPiece("King").getCurrentSquare())) {
+            if(isPlayerChecked(inactivePlayer,
+                    players[inactivePlayer].getPiece("King").getCurrentSquare(), null)) {
                 players[inactivePlayer].setInCheck(true);
                 returnMove = MoveTypes.CHECK;
             }
+            piece.incrementMoves();
             activePlayer = (activePlayer + 1) % 2;
             inactivePlayer = (inactivePlayer + 1) % 2;
         }
@@ -159,17 +173,22 @@ public class GamePlay {
         return returnMove;
     }
 
-    private boolean isPlayerChecked(int playerIndex, int[] kingSquareCoords) {
+    private boolean isPlayerChecked(int playerIndex, int[] kingSquareCoords, Piece pieceTaken) {
         int otherPlayerIndex = (playerIndex + 1) % 2;
         var otherPlayerPieceNames = players[otherPlayerIndex].getPieceNames();
+        String pieceTakenName = "";
+        if(pieceTaken != null)
+            pieceTakenName = pieceTaken.getPieceName();
 
         Piece piece;
         int[] currentPieceCoords;
         boolean canPieceTakeKing;
         for(var pieceName : otherPlayerPieceNames){
+            if(pieceName.equals(pieceTakenName))
+                continue;
             piece = players[otherPlayerIndex].getPiece(pieceName);
             currentPieceCoords = piece.getCurrentSquare();
-            canPieceTakeKing = piece.moveAllowed(currentPieceCoords, kingSquareCoords);
+            canPieceTakeKing = piece.moveAllowed(currentPieceCoords, kingSquareCoords) && piece.isTakingMove();
             if(canPieceTakeKing && !piece.getCanJump()) {
                 ArrayList<int[]> visitedSquares = piece.getVisitedSquares(currentPieceCoords, kingSquareCoords);
                 for (var visitedSquare : visitedSquares)
@@ -200,28 +219,30 @@ public class GamePlay {
     }
     private void writeMove(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece, Piece pieceTaken) {
     }
-    public void pawnPromotion(int[] fromCoordinates, int[] toCoordinates, String chosenPieceType) {
-        Piece promotedPiece = null;
+    public Piece pawnPromotion(int[] fromCoordinates, int[] toCoordinates, String chosenPieceType, Piece promotedPiece) {
+        Piece chosenPiece = null;
         Player player = players[activePlayer];
         player.addPromotion();
-        String pieceName = chosenPieceType + "_" + player.getNumberOfPromotions();
+        String chosenPieceName = chosenPieceType + "_" + player.getNumberOfPromotions();
         switch (chosenPieceType){
             case "Queen":
-                promotedPiece = new QueenPiece(player.getPieceColour(), toCoordinates, pieceName);
+                chosenPiece = new QueenPiece(player.getPieceColour(), toCoordinates, chosenPieceName);
                 break;
             case "Bishop":
-                promotedPiece = new BishopPiece(player.getPieceColour(),
-                        board[toCoordinates[0]][toCoordinates[1]].getSquareColour(), toCoordinates, pieceName);
+                chosenPiece = new BishopPiece(player.getPieceColour(),
+                        board[toCoordinates[0]][toCoordinates[1]].getSquareColour(), toCoordinates, chosenPieceName);
                 break;
             case "Rook":
-                promotedPiece = new RookPiece(player.getPieceColour(), toCoordinates, pieceName);
+                chosenPiece = new RookPiece(player.getPieceColour(), toCoordinates, chosenPieceName);
                 break;
             case "Knight":
-                promotedPiece = new KnightPiece(player.getPieceColour(), toCoordinates, pieceName);
+                chosenPiece = new KnightPiece(player.getPieceColour(), toCoordinates, chosenPieceName);
                 break;
         }
-        player.addPiece(pieceName, promotedPiece);
-        completeMove(promotedPiece, fromCoordinates, toCoordinates, null, null);
+        player.addPiece(chosenPieceName, chosenPiece);
+        player.removePiece(promotedPiece.getPieceName());
+        return chosenPiece;
+//        completeMove(chosenPiece, fromCoordinates, toCoordinates, null, null);
     }
     private boolean isEnPassant(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         if(moves.isEmpty())
@@ -251,10 +272,10 @@ public class GamePlay {
 
         return true;
     }
-    private void enPassantTake(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece) {
+    private Piece enPassantTake(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece) {
         int[] takenSquareCoords = moves.peek().getFinalSquare();
-        var pieceTaken = board[takenSquareCoords[0]][takenSquareCoords[1]].getPiece();
-        completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoords);
+        return board[takenSquareCoords[0]][takenSquareCoords[1]].getPiece();
+//        completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoords);
     }
 
     private void completeMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
@@ -267,6 +288,17 @@ public class GamePlay {
         board[toCoordinates[0]][toCoordinates[1]].setPiece(movedPiece);
         players[activePlayer].getPiece(movedPiece.getPieceName()).setCurrentSquare(toCoordinates);
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(null);
+    }
+
+    private void undoMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
+                          Piece pieceTaken, int[] takenCoordinates){
+        board[fromCoordinates[0]][fromCoordinates[1]].setPiece(movedPiece);
+        players[activePlayer].getPiece(movedPiece.getPieceName()).setCurrentSquare(fromCoordinates);
+        board[toCoordinates[0]][toCoordinates[1]].setPiece(null);
+        if (pieceTaken != null) {
+            players[inactivePlayer].addPiece(pieceTaken.getPieceName(), pieceTaken);
+            board[takenCoordinates[0]][takenCoordinates[1]].setPiece(pieceTaken);
+        }
     }
     public int getActivePlayer() {
         return activePlayer;

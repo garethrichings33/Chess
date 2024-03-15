@@ -13,13 +13,14 @@ public abstract class Piece {
     private final PieceColour colour;
     private boolean canJump;
     private boolean isTakingOnlyMove;
+
+    private boolean isTakingMove;
+
     private boolean isCastlingMove;
     private boolean isPromotionMove;
     private int numberOfMoves;
     private int[] currentSquare;
-
     private final String pieceName;
-
     public Piece(PieceColour colour, String iconResourcename, int[] currentSquare, String pieceName) {
         Image tempIcon;
         this.colour = colour;
@@ -36,10 +37,10 @@ public abstract class Piece {
         this.pieceIcon = tempIcon;
         this.numberOfMoves = 0;
     }
-
     public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
 
     protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
+
     protected ArrayList<int[]> checkFinalSquares(int[] initialSquare, int[][] steps){
         ArrayList<int[]> squares = new ArrayList<>();
         int[] square;
@@ -52,6 +53,7 @@ public abstract class Piece {
         }
         return squares;
     }
+
     public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare){
         int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
         int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);
@@ -118,5 +120,11 @@ public abstract class Piece {
     }
     public String getPieceName() {
         return pieceName;
+    }
+    public void setTakingMove(boolean takingMove) {
+        isTakingMove = takingMove;
+    }
+    public boolean isTakingMove() {
+        return isTakingMove;
     }
 }

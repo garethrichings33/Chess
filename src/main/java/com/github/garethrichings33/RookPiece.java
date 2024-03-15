@@ -13,6 +13,7 @@ public class RookPiece extends Piece{
         setTakingOnlyMove(false);
         setCastlingMove(false);
         setPromotionMove(false);
+        setTakingMove(true);
     }
 
     @Override

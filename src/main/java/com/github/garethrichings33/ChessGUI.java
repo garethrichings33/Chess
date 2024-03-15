@@ -129,11 +129,10 @@ public class ChessGUI extends JFrame implements ActionListener {
         }
     }
 
-    public void promotePawn(int[] fromCoordinates, int[] toCoordinates) {
+    public String promotePawn(int[] fromCoordinates, int[] toCoordinates) {
         String[] options = {"Queen", "Bishop", "Knight", "Rook"};
-        String chosenPiece = JOptionPane.showInputDialog(this, "Choose piece",
+        return JOptionPane.showInputDialog(this, "Choose piece",
                 "Queen", JOptionPane.PLAIN_MESSAGE, null, options, options[0]).toString();
-        gamePlay.pawnPromotion(fromCoordinates, toCoordinates, chosenPiece);
     }
 
     private void invalidMoveWarning() {

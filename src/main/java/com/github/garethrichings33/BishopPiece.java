@@ -17,6 +17,7 @@ public class BishopPiece extends Piece{
         setCastlingMove(false);
         setPromotionMove(false);
         setTakingOnlyMove(false);
+        setTakingMove(true);
     }
 
     @Override

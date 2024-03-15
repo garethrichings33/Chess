@@ -13,6 +13,7 @@ public class KnightPiece extends Piece{
         setTakingOnlyMove(false);
         setCastlingMove(false);
         setPromotionMove(false);
+        setTakingMove(true);
     }
 
     @Override

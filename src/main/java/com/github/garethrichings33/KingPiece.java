@@ -15,6 +15,7 @@ public class KingPiece extends Piece{
         setCanJump(false);
         setPromotionMove(false);
         setTakingOnlyMove(false);
+        setTakingMove(true);
     }
 
     @Override
