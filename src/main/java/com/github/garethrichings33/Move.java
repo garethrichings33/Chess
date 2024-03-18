@@ -1,39 +1,46 @@
 package com.github.garethrichings33;
 
 public class Move {
-    private final int player;
-    private final Piece movedPiece;
-    private final Piece takenPiece;
-    private final int[] initialSquare;
-    private final int[] finalSquare;
-    private final MoveTypes movetype;
+    private final boolean castlingMove;
+    private final boolean promotionMove;
+    private final boolean takingOnlyMove;
+    private final boolean takingMove;
+    private final boolean jumpingMove;
+    private final boolean validMove;
+    public Move() {
+        this.castlingMove = false;
+        this.promotionMove = false;
+        this.takingOnlyMove = false;
+        this.takingMove = false;
+        this.jumpingMove = false;
+        this.validMove = false;
+    }
 
-    private final boolean check;
-    public Move(int player, Piece movedPiece, Piece takenPiece, int[] initialSquare, int[] finalSquare, MoveTypes movetype, boolean check) {
-        this.player = player;
-        this.movedPiece = movedPiece;
-        this.takenPiece = takenPiece;
-        this.initialSquare = initialSquare;
-        this.finalSquare = finalSquare;
-        this.movetype = movetype;
-        this.check = check;
+    public Move(boolean castlingMove, boolean promotionMove, boolean takingOnlyMove, boolean takingMove,
+                boolean jumpingMove, boolean validMove) {
+        this.castlingMove = castlingMove;
+        this.promotionMove = promotionMove;
+        this.takingOnlyMove = takingOnlyMove;
+        this.takingMove = takingMove;
+        this.jumpingMove = jumpingMove;
+        this.validMove = validMove;
     }
-    public Piece getMovedPiece() {
-        return movedPiece;
+    public boolean isCastlingMove() {
+        return castlingMove;
     }
-    public Piece getTakenPiece() {
-        return takenPiece;
+    public boolean isPromotionMove() {
+        return promotionMove;
     }
-    public int[] getInitialSquare() {
-        return initialSquare;
+    public boolean isTakingOnlyMove() {
+        return takingOnlyMove;
     }
-    public int[] getFinalSquare() {
-        return finalSquare;
+    public boolean isTakingMove() {
+        return takingMove;
     }
-    public MoveTypes getMovetype() {
-        return movetype;
+    public boolean isJumpingMove() {
+        return jumpingMove;
     }
-    public boolean isCheck() {
-        return check;
+    public boolean isValidMove() {
+        return validMove;
     }
 }

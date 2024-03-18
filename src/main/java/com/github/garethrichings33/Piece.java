@@ -12,15 +12,10 @@ public abstract class Piece {
     protected String iconResourceName;
     private final PieceColour colour;
     private boolean canJump;
-    private boolean isTakingOnlyMove;
-
-    private boolean isTakingMove;
-
-    private boolean isCastlingMove;
-    private boolean isPromotionMove;
-    private int numberOfMoves;
+    private int numberOfMovesCompleted;
     private int[] currentSquare;
     private final String pieceName;
+    protected final ArrayList<PossibleMove> possibleMoveList;
     public Piece(PieceColour colour, String iconResourcename, int[] currentSquare, String pieceName) {
         Image tempIcon;
         this.colour = colour;
@@ -35,25 +30,21 @@ public abstract class Piece {
             tempIcon = new ImageIcon().getImage();
         }
         this.pieceIcon = tempIcon;
-        this.numberOfMoves = 0;
+        this.numberOfMovesCompleted = 0;
+        possibleMoveList = new ArrayList<>();
     }
-    public abstract boolean moveAllowed(int[] initialSquare, int[] finalSquare);
+    public Move getMove(int[] initialSquare, int[] finalSquare){
+        int[] moveCoordinates = getRequestedMoveCoordinates(initialSquare, finalSquare);
+        PossibleMove possibleMove = getRequestedMove(moveCoordinates);
 
-    protected abstract ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare);
-
-    protected ArrayList<int[]> checkFinalSquares(int[] initialSquare, int[][] steps){
-        ArrayList<int[]> squares = new ArrayList<>();
-        int[] square;
-        for(int i = 0; i < steps.length; i++) {
-            square = Arrays.copyOf(initialSquare, initialSquare.length);
-            while (onGrid(Vectors.sum(square, steps[i]))) {
-                square = Vectors.sum(square, steps[i]);
-                squares.add(square);
-            }
+        if(possibleMove != null){
+            return new Move(possibleMove.isCastlingOnly(), possibleMove.isPromotionPossible(),
+                    possibleMove.isTakingOnly(), possibleMove.isCanTake(), getCanJump(), true);
         }
-        return squares;
-    }
-
+        else
+            return new Move();
+    };
+    protected abstract void createMoveList();
     public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare){
         int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
         int[] visitedSquare = Arrays.copyOf(initialSquare, initialSquare.length);
@@ -66,15 +57,11 @@ public abstract class Piece {
 
         return visitedSquares;
     }
-    public boolean targetSquareValid(int[] targetSquare, ArrayList<int[]> validTargetSquares){
-        for(int[] square : validTargetSquares){
-            if (Arrays.equals(targetSquare, square))
-                return true;
-        }
-        return false;
-    }
-    public boolean onGrid(int[] square) {
-        return square[0] >= 0 && square[0] <= 7 && square[1] >= 0 && square[1] <= 7;
+    public PossibleMove getRequestedMove(int[] move){
+        for(var possibleMove : possibleMoveList)
+            if(possibleMove.coordinatesEqual(move))
+                return possibleMove;
+        return null;
     }
     public boolean getCanJump(){
         return canJump;
@@ -88,29 +75,11 @@ public abstract class Piece {
     public PieceColour getColour() {
         return colour;
     }
-    public boolean isTakingOnlyMove() {
-        return isTakingOnlyMove;
-    }
-    public void setTakingOnlyMove(boolean takingOnlyMove) {
-        isTakingOnlyMove = takingOnlyMove;
-    }
-    public boolean isCastlingMove() {
-        return isCastlingMove;
-    }
-    public void setCastlingMove(boolean castlingMove) {
-        isCastlingMove = castlingMove;
-    }
-    public boolean isPromotionMove() {
-        return isPromotionMove;
-    }
-    public void setPromotionMove(boolean promotionMove) {
-        isPromotionMove = promotionMove;
-    }
-    public int getNumberOfMoves() {
-        return numberOfMoves;
+    public int getNumberOfMovesCompleted() {
+        return numberOfMovesCompleted;
     }
     public void incrementMoves(){
-        numberOfMoves++;
+        numberOfMovesCompleted++;
     }
     public int[] getCurrentSquare() {
         return currentSquare;
@@ -121,10 +90,12 @@ public abstract class Piece {
     public String getPieceName() {
         return pieceName;
     }
-    public void setTakingMove(boolean takingMove) {
-        isTakingMove = takingMove;
+    public void addPossibleMoveToList(PossibleMove possibleMove){
+        possibleMoveList.add(possibleMove);
     }
-    public boolean isTakingMove() {
-        return isTakingMove;
+    public int[] getRequestedMoveCoordinates(int[] initialCoordinates, int[] finalCoordinates){
+        if(initialCoordinates.length != 2 || finalCoordinates.length != 2)
+            throw new IllegalArgumentException();
+        return Vectors.difference(finalCoordinates, initialCoordinates);
     }
 }

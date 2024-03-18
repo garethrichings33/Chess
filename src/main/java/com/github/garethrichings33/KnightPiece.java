@@ -10,30 +10,26 @@ public class KnightPiece extends Piece{
     public KnightPiece(PieceColour pieceColour, int[] currentSquare, String pieceName) {
         super(pieceColour, iconResourceNames.get(pieceColour), currentSquare, pieceName);
         setCanJump(true);
-        setTakingOnlyMove(false);
-        setCastlingMove(false);
-        setPromotionMove(false);
-        setTakingMove(true);
+        createMoveList();
     }
 
     @Override
-    public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
-        var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
-        return targetSquareValid(finalSquare, allowedFinalSquares);
+    protected void createMoveList() {
+        final boolean canTake = true;
+        final boolean takeOnly = false;
+        final boolean promotionPossible = false;
+        final boolean castlingPossible = false;
+        final boolean firstTurnDifferentMove = false;
+        int[] coordinateChange;
+        for(int i = -2; i <= 2; i++)
+            for(int j = -2; j <= 2; j++){
+                if(i == j || i == 0 || j == 0)
+                    continue;
+                coordinateChange = new int[2];
+                coordinateChange[0] = i;
+                coordinateChange[1] = j;
+                addPossibleMoveToList(new PossibleMove(canTake, takeOnly, castlingPossible, promotionPossible,
+                        firstTurnDifferentMove, coordinateChange));
+            }
     }
-
-    @Override
-    protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        ArrayList<int[]> allowedSquares = new ArrayList<>();
-        int[][] steps = {{2, 1}, {-2, 1}, {1, 2}, {-1, 2}, {-2, -1}, {2, -1}, {-1, -2}, {1, -2}};
-        int[] square;
-        for(int i = 0; i < steps.length; i++){
-            square = Vectors.sum(initialSquare, steps[i]);
-            if(onGrid(square))
-                allowedSquares.add(square);
-        }
-
-        return allowedSquares;
-    }
-
 }

@@ -1,11 +1,8 @@
 package com.github.garethrichings33;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class KingPiece extends Piece{
-
     private static final HashMap<PieceColour, String> iconResourceNames = new HashMap<>()
         {{put(PieceColour.BLACK, "/Chess_kdt60.png");
         put(PieceColour.WHITE, "/Chess_klt60.png");}};
@@ -13,46 +10,50 @@ public class KingPiece extends Piece{
     public KingPiece(PieceColour pieceColour, int[] currentSquare, String pieceName) {
         super(pieceColour,iconResourceNames.get(pieceColour), currentSquare, pieceName);
         setCanJump(false);
-        setPromotionMove(false);
-        setTakingOnlyMove(false);
-        setTakingMove(true);
+        createMoveList();
     }
-
     @Override
-    public boolean moveAllowed(int[] initialSquare, int[] finalSquare) {
-        var allowedFinalSquares = getAllowedFinalSquares(initialSquare);
-        boolean validMove = targetSquareValid(finalSquare, allowedFinalSquares);
+    public Move getMove(int[] initialSquare, int[] finalSquare) {
+        int[] moveCoordinates = getRequestedMoveCoordinates(initialSquare, finalSquare);
+        PossibleMove possibleMove = getRequestedMove(moveCoordinates);
 
-        setCastlingMove(Math.abs(finalSquare[1] - initialSquare[1]) == 2);
-        return validMove;
+        if(possibleMove != null && !(possibleMove.isFirstTurnOnly() && getNumberOfMovesCompleted() != 0)) {
+            return new Move(possibleMove.isCastlingOnly(), possibleMove.isPromotionPossible(),
+                    possibleMove.isTakingOnly(), possibleMove.isCanTake(), getCanJump(), true);
+        }
+        else
+            return new Move();
     }
-
     @Override
-    protected ArrayList<int[]> getAllowedFinalSquares(int[] initialSquare) {
-        ArrayList<int[]> allowedSquares = new ArrayList<>();
-        int[] square;
+    protected void createMoveList() {
+        int[] coordinateChange;
+        final boolean takeOnly = false;
+        final boolean promotionPossible = false;
+        boolean castling;
+        boolean takingMove;
+        boolean firstTurnOnly;
         for(int i = -1; i <= 1; i++) {
+            castling = false;
+            takingMove = true;
+            firstTurnOnly = false;
             for (int j = -1; j <= 1; j++) {
-                square = new int[2];
-                square[0] = initialSquare[0] + i;
-                square[1] = initialSquare[1] + j;
-                if(onGrid(square) && !Arrays.equals(square, initialSquare)) {
-                    allowedSquares.add(square);
-                }
+                coordinateChange = new int[2];
+                coordinateChange[0] = i;
+                coordinateChange[1] = j;
+                addPossibleMoveToList(new PossibleMove(takingMove, takeOnly, castling, promotionPossible,
+                        firstTurnOnly, coordinateChange));
             }
         }
 
-        if(getNumberOfMoves() == 0){
-            for(int i : new int[]{-2, 2}){
-                square = new int[2];
-                square[0] = initialSquare[0];
-                square[1] = initialSquare[1] + i;
-                if(onGrid(square))
-                    allowedSquares.add(square);
-            }
+        for(int i : new int[]{-2, 2}){
+            castling = true;
+            takingMove = false;
+            firstTurnOnly = true;
+            coordinateChange = new int[2];
+            coordinateChange[0] = 0;
+            coordinateChange[1] = i;
+            addPossibleMoveToList(new PossibleMove(takingMove, takeOnly, castling, promotionPossible,
+                    firstTurnOnly, coordinateChange));
         }
-
-        return allowedSquares;
     }
-
 }

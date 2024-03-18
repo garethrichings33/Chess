@@ -23,6 +23,12 @@ public class Vectors {
         return result;
     }
 
+    public static int[] multiplyByInteger(int scalar, int[] vector){
+        int[] result = new int[vector.length];
+        for(int i = 0; i < vector.length; i++)
+            result[i] = scalar * vector[i];
+        return result;
+    }
     public static int[] scaleToLargestValue(int[] vector){
         int[] result = new int[vector.length];
         int largestMagnitude = getLargestMagnitude(vector);
