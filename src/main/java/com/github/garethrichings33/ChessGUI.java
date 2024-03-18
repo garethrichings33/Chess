@@ -8,12 +8,17 @@ import java.awt.event.ActionListener;
 public class ChessGUI extends JFrame implements ActionListener {
     private GamePlay gamePlay;
     private JPanel boardPanel;
+    private JPanel infoPanel;
+    private Font gameFont;
     private JButton[][] squareButtons;
+    private JLabel playerToGo;
     String fromButton;
     String toButton;
 
     public ChessGUI(){
         gamePlay = new GamePlay(this);
+
+        gameFont = new Font("Arial", Font.PLAIN, 20);
 
         setTitle("Chess");
         setSize(800, 800);
@@ -37,11 +42,19 @@ public class ChessGUI extends JFrame implements ActionListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
         add(boardPanel, gbc);
+
+        infoPanel = createInformationPanel();
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.ipady = 30;
+        add(infoPanel, gbc);
     }
 
     private JPanel createBoardPanel() {
         var panel =  new JPanel(new GridBagLayout());
-        var boardFont = new Font("Arial", Font.PLAIN, 20);
+        var boardFont = gameFont;
         var squareSize = new Dimension(70, 70);
         squareButtons = new JButton[8][8];
 
@@ -98,6 +111,20 @@ public class ChessGUI extends JFrame implements ActionListener {
         return panel;
     }
 
+    private JPanel createInformationPanel(){
+        GridBagConstraints gbc;
+        var panel = new JPanel(new GridBagLayout());
+
+        playerToGo = new JLabel("White to go");
+        playerToGo.setFont(gameFont);
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(playerToGo);
+
+        return panel;
+    }
     private void placePieces(){
         for(int i = 0; i < 8; i++)
             for(int j = 0; j < 8; j++)
@@ -116,17 +143,30 @@ public class ChessGUI extends JFrame implements ActionListener {
             fromButton = buttonPressed;
         else {
             toButton = buttonPressed;
-            moveType = gamePlay.movePiece(fromButton, toButton);
-            if(moveType == MoveTypes.INVALID)
-                invalidMoveWarning();
-            else {
-                placePieces();
-                if(moveType == MoveTypes.CHECK)
-                    checkMessage();
-            }
-            fromButton = "";
-            toButton = "";
+            moveManager();
         }
+    }
+
+    private void moveManager() {
+        var moveType = gamePlay.movePiece(fromButton, toButton);
+        if(moveType == MoveTypes.INVALID)
+            invalidMoveWarning();
+        else {
+            placePieces();
+            if(moveType == MoveTypes.CHECK)
+                checkMessage();
+        }
+        updateInfoLabel();
+        resetPressedButtons();
+    }
+
+    private void updateInfoLabel() {
+        playerToGo.setText(gamePlay.getActivePlayer().getPieceColourString() + " to go");
+    }
+
+    private void resetPressedButtons() {
+        fromButton = "";
+        toButton = "";
     }
 
     public String promotePawn(int[] fromCoordinates, int[] toCoordinates) {

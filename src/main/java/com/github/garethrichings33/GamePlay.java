@@ -223,7 +223,6 @@ public class GamePlay {
         }
         return false;
     }
-
     public Square getSquare(int i, int j){
         return board[i][j];
     }
@@ -316,8 +315,8 @@ public class GamePlay {
             board[takenCoordinates[0]][takenCoordinates[1]].setPiece(pieceTaken);
         }
     }
-    public int getActivePlayer() {
-        return activePlayer;
+    public Player getActivePlayer() {
+        return players[activePlayer];
     }
     public void setActivePlayer(int activePlayer) {
         this.activePlayer = activePlayer;

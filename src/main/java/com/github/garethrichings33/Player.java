@@ -12,7 +12,6 @@ public class Player {
     private boolean inCheck;
     private final int initialRank;
     private final int initialPawnRank;
-
     int numberOfPromotions;
     public Player(String name, PieceColour pieceColour) {
         this.name = name;
