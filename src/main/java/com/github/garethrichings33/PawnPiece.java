@@ -50,12 +50,16 @@ public class PawnPiece extends Piece{
 
     @Override
     public Move getMove(int[] initialSquare, int[] finalSquare) {
+        if(notOnGrid(finalSquare))
+            return new Move();
+
         int[] moveCoordinates = getRequestedMoveCoordinates(initialSquare, finalSquare);
         PossibleMove possibleMove = getRequestedMove(moveCoordinates);
         if(possibleMove != null && !(possibleMove.isFirstTurnOnly() && getNumberOfMovesCompleted() != 0)) {
             boolean promotionMove = (finalSquare[0] == 0 || finalSquare[0] == 7) && possibleMove.isPromotionPossible();
-            return new Move(possibleMove.isCastlingOnly(), promotionMove, possibleMove.isTakingOnly(),
-                    possibleMove.isTakingOnly(), getCanJump(), true);
+            return new Move(this, initialSquare, finalSquare, possibleMove.isCastlingOnly(),
+                    promotionMove, possibleMove.isTakingOnly(), possibleMove.isTakingOnly(),
+                    getCanJump(), true);
         }
         else
             return new Move();

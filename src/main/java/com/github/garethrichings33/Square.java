@@ -6,7 +6,6 @@ public class Square{
     private Character file;
     private boolean occupied;
     private int[] coordinates = new int[2];
-
     private Piece piece;
 
     public Square(SquareColour squareColour, int[] coordinates) {

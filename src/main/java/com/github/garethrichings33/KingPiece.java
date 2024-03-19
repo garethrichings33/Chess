@@ -14,12 +14,16 @@ public class KingPiece extends Piece{
     }
     @Override
     public Move getMove(int[] initialSquare, int[] finalSquare) {
+        if(notOnGrid(finalSquare))
+            return new Move();
+
         int[] moveCoordinates = getRequestedMoveCoordinates(initialSquare, finalSquare);
         PossibleMove possibleMove = getRequestedMove(moveCoordinates);
 
         if(possibleMove != null && !(possibleMove.isFirstTurnOnly() && getNumberOfMovesCompleted() != 0)) {
-            return new Move(possibleMove.isCastlingOnly(), possibleMove.isPromotionPossible(),
-                    possibleMove.isTakingOnly(), possibleMove.isCanTake(), getCanJump(), true);
+            return new Move(this, initialSquare, finalSquare, possibleMove.isCastlingOnly(),
+                    possibleMove.isPromotionPossible(), possibleMove.isTakingOnly(),
+                    possibleMove.isCanTake(), getCanJump(), true);
         }
         else
             return new Move();

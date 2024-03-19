@@ -1,30 +1,23 @@
 package com.github.garethrichings33;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Stack;
+import java.util.*;
 
 public class GamePlay {
     private ChessGUI gui;
     private Square[][] board;
-    private HashMap<String, Piece> pieces;
     private Player[] players;
     private int activePlayer;
     private int inactivePlayer;
 //    private ArrayList<String> moveList;
     private Stack<Turn> turns;
-    private boolean inCheck;
-
+    private Move attackingMove;
     public GamePlay(ChessGUI gui) {
         this.gui = gui;
-        board = new Square[8][8];
         initialisePlayers();
-        initialiseBoard();
-        addPieces();
+        board = createBoard();
+        addInitialPieces();
 
         turns = new Stack<>();
-        this.inCheck = false;
     }
     private void initialisePlayers() {
         players = new Player[2];
@@ -33,19 +26,22 @@ public class GamePlay {
         activePlayer = 0;
         inactivePlayer = 1;
     }
-    private void initialiseBoard() {
-        int[] coordinates = new int[2];
+    private Square[][] createBoard() {
+        var tempBoard = new Square[8][8];
+        int[] coordinates;
         for(int i = 0; i < 8; i++)
             for(int j =0; j < 8; j++) {
+                coordinates = new int[2];
                 coordinates[0] = i;
                 coordinates[1] = j;
                 if ((i + j) % 2 == 0)
-                    board[i][j] = new Square(SquareColour.WHITE, coordinates);
+                    tempBoard[i][j] = new Square(SquareColour.WHITE, coordinates);
                 else
-                    board[i][j] = new Square(SquareColour.BLACK, coordinates);
+                    tempBoard[i][j] = new Square(SquareColour.BLACK, coordinates);
             }
+        return tempBoard;
     }
-    private void addPieces() {
+    private void addInitialPieces() {
         int blackPlayerIndex;
         if(players[0].getPieceColour() == PieceColour.BLACK)
             blackPlayerIndex = 0;
@@ -79,149 +75,223 @@ public class GamePlay {
         }
 
     }
-    public MoveTypes movePiece(String fromButton, String toButton) {
+    public MoveTypes gameTurn(String fromButton, String toButton) {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
-        int[] takenSquareCoordinates = null;
+
+        if(noPieceSelected(fromSquareCoordinates))
+            return MoveTypes.INVALID;
+        if(wrongColourPiece(fromSquareCoordinates))
+            return MoveTypes.INVALID;
+
         MoveTypes returnMove = MoveTypes.VALID;
+        Piece movingPiece = getSquare(fromSquareCoordinates).getPiece();
 
-        var piece = getSquare(fromSquareCoordinates).getPiece();
-        if(piece == null)
-            return MoveTypes.INVALID;
+        attackingMove = getMove(movingPiece, fromSquareCoordinates, toSquareCoordinates);
+        movingPiece = attackingMove.getMovingPiece();
 
-//      Check colour of piece matches player's colour
-        var pieceColour = piece.getColour();
-        if(players[activePlayer].getPieceColour() != pieceColour)
-            return MoveTypes.INVALID;
-
-//      Check move is within scope of the chosen piece.
-        var move = piece.getMove(fromSquareCoordinates, toSquareCoordinates);
-        if(!move.isValidMove())
-            return MoveTypes.INVALID;
-
-//      Check path is clear for move for non-jumping pieces.
-        if(!piece.getCanJump()){
-            ArrayList<int[]> visitedSquares = piece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
-            for(var visitedSquare : visitedSquares)
-                if(getSquare(visitedSquare).getPiece() != null)
-                    return MoveTypes.INVALID;
-        }
-
-//      Check a taking move. Must take a piece of the opposite colour.
-        Piece pieceTaken = null;
-        if(getSquare(toSquareCoordinates).getPiece() != null) {
-            if(getSquare(toSquareCoordinates).getPiece().getColour() == pieceColour ||  !move.isTakingMove()) {
-                return MoveTypes.INVALID;
-            }
-            else {
-                pieceTaken = getSquare(toSquareCoordinates).getPiece();
-                takenSquareCoordinates = Arrays.copyOf(toSquareCoordinates, toSquareCoordinates.length);
-            }
-        }
-
-//      Check pawn for en passant.
-        if(pieceTaken == null && move.isTakingOnlyMove()) {
-            if (isEnPassant(fromSquareCoordinates)) {
-                pieceTaken = getEnPassantTakenPiece();
-                takenSquareCoordinates = pieceTaken.getCurrentSquare();
-                returnMove = MoveTypes.ENPASSANT;
-            }
-            else
-                returnMove = MoveTypes.INVALID;
-        }
-
-//      Check for a castling move
-        Piece castledRook = null;
-        int[] castledRookSquare = new int[2];
-        if(move.isCastlingMove()){
-            if(pieceTaken != null || players[activePlayer].isInCheck())
-                return MoveTypes.INVALID;
-            castledRook = getCastlingRook(fromSquareCoordinates, toSquareCoordinates);
-            if(castledRook != null)
-                if(castlingPathClear(piece, castledRook)) {
-                    castledRookSquare = getCastledRookSquare(fromSquareCoordinates, toSquareCoordinates);
-                    completeMove(piece, fromSquareCoordinates, castledRookSquare, null, null);
-                    var checked = isPlayerChecked(activePlayer, castledRookSquare, null);
-                    undoMove(piece,fromSquareCoordinates, castledRookSquare, null, null);
-                    if(checked)
-                        return MoveTypes.INVALID;
-
-                    returnMove = MoveTypes.CASTLE;
-                }
-                else
-                    return MoveTypes.INVALID;
-        }
-
-//      Check for pawn promotion.
-        if(move.isPromotionMove() && (!move.isTakingMove() || pieceTaken != null)){
-            var chosenPieceName = gui.promotePawn(fromSquareCoordinates, toSquareCoordinates);
-            pieceTaken = piece;
-            takenSquareCoordinates = Arrays.copyOf(fromSquareCoordinates, fromSquareCoordinates.length);
-            piece = pawnPromotion(toSquareCoordinates, chosenPieceName, piece);
-            returnMove = MoveTypes.PROMOTION;
-        }
+//        attackIntoCheck(attackingMove);
 
 //      Complete the actual move if not a special move.
-        if(returnMove == MoveTypes.VALID || returnMove == MoveTypes.ENPASSANT
-                || returnMove == MoveTypes.PROMOTION || returnMove == MoveTypes.CASTLE) {
-            completeMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
-            if(isPlayerChecked(activePlayer,
-                    players[activePlayer].getPiece("King").getCurrentSquare(), pieceTaken)){
-                undoMove(piece, fromSquareCoordinates, toSquareCoordinates, pieceTaken, takenSquareCoordinates);
-                returnMove = MoveTypes.INVALID;
+        if(attackingMove.isValidMove()) {
+            completeMove(movingPiece, fromSquareCoordinates, toSquareCoordinates, attackingMove.getTakenPiece(),
+                    attackingMove.getTakenSquareCoordinates());
+            if(attackerIntoCheck(activePlayer, attackingMove)){
+                undoMove(movingPiece, fromSquareCoordinates, toSquareCoordinates, attackingMove.getTakenPiece(),
+                        attackingMove.getTakenSquareCoordinates());
+                attackingMove.setInvalidMove();
             }
-            if(returnMove == MoveTypes.CASTLE)
-                completeMove(castledRook, castledRook.getCurrentSquare(),
-                        castledRookSquare, null, null);
+            if(attackingMove.isCastlingMove())
+                completeMove(attackingMove.getCastledRook(), attackingMove.getCastledRook().getCurrentSquare(),
+                        attackingMove.getCastledRookSquareCoordinates(), attackingMove.getTakenPiece(),
+                        attackingMove.getTakenSquareCoordinates());
             players[activePlayer].setInCheck(false);
         }
 
 //        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
 
-        if(returnMove != MoveTypes.INVALID) {
-            turns.push(new Turn(activePlayer, piece, pieceTaken, fromSquareCoordinates, toSquareCoordinates, returnMove, inCheck));
-            if(pieceTaken != null)
-                players[inactivePlayer].removePiece(pieceTaken.getPieceName());
-            if(isPlayerChecked(inactivePlayer,
-                    players[inactivePlayer].getPiece("King").getCurrentSquare(), null)) {
-                players[inactivePlayer].setInCheck(true);
-                returnMove = MoveTypes.CHECK;
+        if(attackingMove.isValidMove()) {
+            if(attackingMove.getTakenPiece() != null)
+                players[inactivePlayer].removePiece(attackingMove.getTakenPiece().getPieceName());
+            if(defenderInCheck(inactivePlayer,
+                    players[inactivePlayer].getPiece("King").getCurrentSquare())) {
+                if(isPlayerCheckmated()){
+                    endGame();
+                    returnMove = MoveTypes.CHECKMATE;
+                }
+                else {
+                    players[inactivePlayer].setInCheck(true);
+                    returnMove = MoveTypes.CHECK;
+                }
             }
-            piece.incrementMoves();
-            activePlayer = (activePlayer + 1) % 2;
-            inactivePlayer = (inactivePlayer + 1) % 2;
+            turns.push(new Turn(activePlayer, movingPiece, attackingMove.getTakenPiece(), fromSquareCoordinates,
+                    toSquareCoordinates, returnMove, players[inactivePlayer].isInCheck()));
+            movingPiece.incrementMoves();
+            updatePlayerIndices();
         }
 
+        if(!attackingMove.isValidMove())
+            returnMove = MoveTypes.INVALID;
         return returnMove;
     }
 
-    private boolean isPlayerChecked(int playerIndex, int[] kingSquareCoords, Piece pieceTaken) {
-        int otherPlayerIndex = (playerIndex + 1) % 2;
-        var otherPlayerPieceNames = players[otherPlayerIndex].getPieceNames();
-        String pieceTakenName = "";
-        if(pieceTaken != null)
-            pieceTakenName = pieceTaken.getPieceName();
+    private void updatePlayerIndices() {
+        activePlayer = (activePlayer + 1) % 2;
+        inactivePlayer = (inactivePlayer + 1) % 2;
+    }
 
-        Piece piece;
-        int[] currentPieceCoords;
-        boolean canPieceTakeKing;
-        Move move;
-        for(var pieceName : otherPlayerPieceNames){
-            if(pieceName.equals(pieceTakenName))
-                continue;
-            piece = players[otherPlayerIndex].getPiece(pieceName);
-            currentPieceCoords = piece.getCurrentSquare();
-            move = piece.getMove(currentPieceCoords, kingSquareCoords);
-            canPieceTakeKing = move.isValidMove() && move.isTakingMove();
-            if(canPieceTakeKing && !piece.getCanJump()) {
-                ArrayList<int[]> visitedSquares = piece.getVisitedSquares(currentPieceCoords, kingSquareCoords);
-                for (var visitedSquare : visitedSquares)
-                    canPieceTakeKing = canPieceTakeKing && getSquare(visitedSquare).getPiece() == null;
+    private Move getMove(Piece movingPiece, int[] fromSquareCoordinates, int[] toSquareCoordinates) {
+        var move = movingPiece.getMove(fromSquareCoordinates, toSquareCoordinates);
+        if(!move.isValidMove())
+            return new InvalidMove();
+
+        if(!movingPiece.getCanJump()){
+            ArrayList<int[]> visitedSquares =
+                    movingPiece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
+            for(var visitedSquare : visitedSquares)
+                if(getSquare(visitedSquare).getPiece() != null)
+                    return new InvalidMove();
+        }
+
+        if(getSquare(toSquareCoordinates).getPiece() != null) {
+            if(getSquare(toSquareCoordinates).getPiece().getColour() == movingPiece.getColour() ||
+                    !move.isTakingMove())
+                return new InvalidMove();
+            else {
+                move.setTakenPiece(getSquare(toSquareCoordinates).getPiece());
+                move.setTakenSquareCoordinates(Arrays.copyOf(toSquareCoordinates, toSquareCoordinates.length));
             }
-            if(canPieceTakeKing)
+        }
+        else if(move.isTakingOnlyMove()) {
+            if (isEnPassant(fromSquareCoordinates)) {
+                move.setTakenPiece(getEnPassantTakenPiece());
+                move.setTakenSquareCoordinates(move.getTakenPiece().getCurrentSquare());
+                move.setEnPassantMove(true);
+            }
+            else
+                return new InvalidMove();
+        }
+
+        if(move.isCastlingMove()){
+            if(move.getTakenPiece() != null || players[activePlayer].isInCheck())
+                return new InvalidMove();
+            var castledRook = getCastlingRook(fromSquareCoordinates, toSquareCoordinates);
+            if(castledRook != null){
+                if(castlingPathClear(movingPiece, castledRook)) {
+                    var castledRookSquare = getCastledRookSquare(fromSquareCoordinates, toSquareCoordinates);
+                    completeMove(movingPiece, fromSquareCoordinates, castledRookSquare, null, null);
+                    var checked = attackerIntoCheck(activePlayer, move);
+                    undoMove(movingPiece,fromSquareCoordinates, castledRookSquare, null, null);
+                    if(checked)
+                        return new InvalidMove();
+                    move.setCastledRook(castledRook);
+                    move.setCastledRookSquareCoordinates(castledRookSquare);
+                }
+                else
+                    return new InvalidMove();
+            }
+            else
+                return new InvalidMove();
+        }
+
+        if(move.isPromotionMove() && (!move.isTakingMove() || move.getTakenPiece() != null)){
+            var chosenPieceName = gui.promotePawn(fromSquareCoordinates, toSquareCoordinates);
+            move.setTakenPiece(movingPiece);
+            move.setTakenSquareCoordinates(Arrays.copyOf(fromSquareCoordinates, fromSquareCoordinates.length));
+            move.setMovingPiece(pawnPromotion(toSquareCoordinates, chosenPieceName, movingPiece));
+        }
+
+        return move;
+    }
+
+    private boolean noPieceSelected(int[] fromSquareCoordinates) {
+        return getSquare(fromSquareCoordinates).getPiece() == null;
+    }
+    private boolean wrongColourPiece(int[] fromSquareCoordinates) {
+        return players[activePlayer].getPieceColour() != getSquare(fromSquareCoordinates).getPiece().getColour();
+    }
+    private boolean isPlayerCheckmated() {
+        var defendingPieceNames = players[inactivePlayer].getPieceNames();
+
+        Piece defendingPiece;
+        int[] initialSquare;
+        int [] finalSquare;
+        Move move;
+        for(var defendingPieceName : defendingPieceNames){
+            defendingPiece = players[inactivePlayer].getPiece(defendingPieceName);
+            initialSquare = defendingPiece.getCurrentSquare();
+            for(var possibleMove : defendingPiece.getPossibleMoveList()){
+                finalSquare = Vectors.sum(initialSquare, possibleMove.getCoordinateChange());
+                move = getMove(defendingPiece, initialSquare, finalSquare);
+                if(!move.isValidMove())
+                    continue;
+                if(!attackerIntoCheck(inactivePlayer, move))
+                    return false;
+            }
+        }
+        return true;
+    }
+    private void endGame() {
+        players[activePlayer].addPoint();
+        System.out.println("Checkmate");
+    }
+    private boolean defenderInCheck(int defendingPlayerIndex, int[] defendingKingSquareCoords){
+        int attackingPlayerIndex = (defendingPlayerIndex + 1) % 2;
+        var attackingPlayerPieceNames = players[attackingPlayerIndex].getPieceNames();
+        return canAttackerTakeKing(attackingPlayerIndex, attackingPlayerPieceNames, new HashSet<>(),
+                defendingKingSquareCoords, new InvalidMove());
+    }
+    private boolean attackerIntoCheck(int attackingPlayerIndex, Move lastMove) {
+        int defendingPlayerIndex = (attackingPlayerIndex + 1) % 2;
+        var defendingPlayerPieceNames = players[defendingPlayerIndex].getPieceNames();
+
+        int[] kingSquareCoords;
+        Piece movingPiece = lastMove.getMovingPiece();
+        if(movingPiece.getPieceName() == "King")
+            kingSquareCoords = lastMove.getToCoordinates();
+        else
+            kingSquareCoords = players[attackingPlayerIndex].getPiece("King").getCurrentSquare();
+
+        Set<String> ignorePieces = new HashSet<>();
+        if(lastMove.getTakenPiece() != null)
+            ignorePieces.add(lastMove.getTakenPiece().getPieceName());
+
+        var inCheck = canAttackerTakeKing(defendingPlayerIndex, defendingPlayerPieceNames, ignorePieces,
+                kingSquareCoords, lastMove);
+
+        if(lastMove.isCastlingMove())
+            inCheck = inCheck ||
+                    canAttackerTakeKing(defendingPlayerIndex, defendingPlayerPieceNames, ignorePieces,
+                            lastMove.getCastledRookSquareCoordinates(), lastMove);
+        return inCheck;
+    }
+    private boolean canAttackerTakeKing(int attackingPlayerIndex, Set<String> attackingPlayerPieceNames,
+                                        Set<String> piecesIgnored, int[] defendingKingSquareCoords,
+                                        Move lastmove){
+        Piece attackingPiece;
+        for(var attackingPieceName : attackingPlayerPieceNames){
+            if(piecesIgnored.contains(attackingPieceName))
+                continue;
+            attackingPiece = players[attackingPlayerIndex].getPiece(attackingPieceName);
+            if(canPieceTakeKing(attackingPiece, attackingPiece.getCurrentSquare(), defendingKingSquareCoords,
+                    lastmove))
                 return true;
         }
         return false;
+    }
+    private boolean canPieceTakeKing(Piece attackingPiece, int[] attackingPieceCoords,
+                                     int[] defendingKingSquareCoords, Move lastMove){
+        var nextAttackingMove = attackingPiece.getMove(attackingPieceCoords, defendingKingSquareCoords);
+        var canMoveTakeKing = nextAttackingMove.isValidMove() && nextAttackingMove.isTakingMove();
+        if(canMoveTakeKing && !attackingPiece.getCanJump()) {
+            ArrayList<int[]> visitedSquares =
+                    attackingPiece.getVisitedSquares(attackingPieceCoords, defendingKingSquareCoords);
+            for (var visitedSquare : visitedSquares)
+                canMoveTakeKing = canMoveTakeKing &&
+                        getSquare(visitedSquare).getPiece() == null &&
+                        !Arrays.equals(visitedSquare, lastMove.getToCoordinates());
+        }
+        return canMoveTakeKing;
     }
     public Square getSquare(int i, int j){
         return board[i][j];
@@ -343,8 +413,7 @@ public class GamePlay {
         int[] check = Vectors.sum(rookCoords, new int[]{0 ,1});
         return(board[check[0]][check[1]].getPiece() == null);
     }
-    private int[] getCastledRookSquare(int[] fromSquareCoordinates, int[] toSquareCoordinates)
-    {
+    private int[] getCastledRookSquare(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         int[] coords = new int[2];
         coords[0] = fromSquareCoordinates[0];
         coords[1] = (fromSquareCoordinates[1] + toSquareCoordinates[1])/2;

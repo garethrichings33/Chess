@@ -12,12 +12,14 @@ public class Player {
     private boolean inCheck;
     private final int initialRank;
     private final int initialPawnRank;
-    int numberOfPromotions;
+    private int numberOfPromotions;
+    private int pointsWon;
     public Player(String name, PieceColour pieceColour) {
         this.name = name;
         this.pieceColour = pieceColour;
         this.inCheck = false;
         this.numberOfPromotions = 0;
+        this.pointsWon = 0;
         if(pieceColour == PieceColour.WHITE) {
             pieceColourString = "White";
             initialRank = 7;
@@ -31,7 +33,6 @@ public class Player {
 
         initialisePieces();
     }
-
     private void initialisePieces() {
         pieces = new HashMap<>();
         pieces.put("King", new KingPiece(pieceColour, new int[]{initialRank, 4}, "King"));
@@ -85,5 +86,11 @@ public class Player {
     }
     public Set<String> getPieceNames(){
         return pieces.keySet();
+    }
+    public void addPoint(){
+        pointsWon++;
+    }
+    public int getPointsWon() {
+        return pointsWon;
     }
 }

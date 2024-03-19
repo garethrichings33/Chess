@@ -7,7 +7,6 @@ public class Turn {
     private final int[] initialSquare;
     private final int[] finalSquare;
     private final MoveTypes movetype;
-
     private final boolean check;
     public Turn(int player, Piece movedPiece, Piece takenPiece, int[] initialSquare, int[] finalSquare, MoveTypes movetype, boolean check) {
         this.player = player;

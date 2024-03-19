@@ -34,16 +34,24 @@ public abstract class Piece {
         possibleMoveList = new ArrayList<>();
     }
     public Move getMove(int[] initialSquare, int[] finalSquare){
+        if(notOnGrid(finalSquare))
+            return new Move();
+
         int[] moveCoordinates = getRequestedMoveCoordinates(initialSquare, finalSquare);
         PossibleMove possibleMove = getRequestedMove(moveCoordinates);
 
         if(possibleMove != null){
-            return new Move(possibleMove.isCastlingOnly(), possibleMove.isPromotionPossible(),
-                    possibleMove.isTakingOnly(), possibleMove.isCanTake(), getCanJump(), true);
+            return new Move(this, initialSquare, finalSquare, possibleMove.isCastlingOnly(),
+                    possibleMove.isPromotionPossible(), possibleMove.isTakingOnly(),
+                    possibleMove.isCanTake(), getCanJump(), true);
         }
         else
             return new Move();
-    };
+    }
+
+    protected boolean notOnGrid(int[] finalSquare) {
+        return finalSquare[0] < 0 || finalSquare[0] > 7 || finalSquare[1] < 0 || finalSquare[1] > 7;
+    }
     protected abstract void createMoveList();
     public ArrayList<int[]> getVisitedSquares(int[] initialSquare, int[] finalSquare){
         int[] step = Vectors.scaleToLargestValue(Vectors.difference(finalSquare, initialSquare));
@@ -92,6 +100,9 @@ public abstract class Piece {
     }
     public void addPossibleMoveToList(PossibleMove possibleMove){
         possibleMoveList.add(possibleMove);
+    }
+    public ArrayList<PossibleMove> getPossibleMoveList() {
+        return possibleMoveList;
     }
     public int[] getRequestedMoveCoordinates(int[] initialCoordinates, int[] finalCoordinates){
         if(initialCoordinates.length != 2 || finalCoordinates.length != 2)

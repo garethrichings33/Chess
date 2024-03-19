@@ -148,12 +148,15 @@ public class ChessGUI extends JFrame implements ActionListener {
     }
 
     private void moveManager() {
-        var moveType = gamePlay.movePiece(fromButton, toButton);
+        var moveType = gamePlay.gameTurn(fromButton, toButton);
         if(moveType == MoveTypes.INVALID)
             invalidMoveWarning();
+
         else {
             placePieces();
-            if(moveType == MoveTypes.CHECK)
+            if (moveType == MoveTypes.CHECKMATE)
+                checkMateMessage();
+            else if(moveType == MoveTypes.CHECK)
                 checkMessage();
         }
         updateInfoLabel();
@@ -183,5 +186,10 @@ public class ChessGUI extends JFrame implements ActionListener {
     public void checkMessage() {
         JOptionPane.showMessageDialog(this,
                 "Check");
+    }
+
+    private void checkMateMessage() {
+        JOptionPane.showMessageDialog(this,
+                "Checkmate!");
     }
 }
