@@ -15,8 +15,8 @@ public class GamePlay {
         this.gui = gui;
         initialisePlayers();
         board = createBoard();
-        addInitialPieces();
 
+        addInitialPieces();
         turns = new Stack<>();
     }
     private void initialisePlayers() {
@@ -40,6 +40,26 @@ public class GamePlay {
                     tempBoard[i][j] = new Square(SquareColour.BLACK, coordinates);
             }
         return tempBoard;
+    }
+    public void initialiseNewGame() {
+        players[0].playerNewGame();
+        players[1].playerNewGame();
+        if(players[0].getPieceColour() == PieceColour.WHITE) {
+            activePlayer = 0;
+            inactivePlayer = 1;
+        }
+        else{
+            activePlayer = 1;
+            inactivePlayer = 0;
+        }
+        removeAllPieces();
+        addInitialPieces();
+        turns = new Stack<>();
+    }
+    private void removeAllPieces(){
+        for(int i = 0; i < 8; i++)
+            for(int j = 0; j < 8; j++)
+                board[i][j].setPiece(null);
     }
     private void addInitialPieces() {
         int blackPlayerIndex;
@@ -73,8 +93,8 @@ public class GamePlay {
             board[6][i].setPiece(players[whitePlayerIndex]
                     .getPiece("Pawn_" + Character.toString((char)(65+i))));
         }
-
     }
+
     public MoveTypes gameTurn(String fromButton, String toButton) {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
@@ -89,8 +109,6 @@ public class GamePlay {
 
         attackingMove = getMove(movingPiece, fromSquareCoordinates, toSquareCoordinates);
         movingPiece = attackingMove.getMovingPiece();
-
-//        attackIntoCheck(attackingMove);
 
 //      Complete the actual move if not a special move.
         if(attackingMove.isValidMove()) {
@@ -134,7 +152,6 @@ public class GamePlay {
             returnMove = MoveTypes.INVALID;
         return returnMove;
     }
-
     private void updatePlayerIndices() {
         activePlayer = (activePlayer + 1) % 2;
         inactivePlayer = (inactivePlayer + 1) % 2;
@@ -390,6 +407,9 @@ public class GamePlay {
     }
     public void setActivePlayer(int activePlayer) {
         this.activePlayer = activePlayer;
+    }
+    public Player[] getPlayers() {
+        return players;
     }
     private Piece getCastlingRook(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         String pieceName;

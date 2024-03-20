@@ -12,8 +12,9 @@ public class ChessGUI extends JFrame implements ActionListener {
     private Font gameFont;
     private JButton[][] squareButtons;
     private JLabel playerToGo;
-    String fromButton;
-    String toButton;
+    private JLabel scoreboard;
+    private String fromButton;
+    private String toButton;
 
     public ChessGUI(){
         gamePlay = new GamePlay(this);
@@ -122,10 +123,27 @@ public class ChessGUI extends JFrame implements ActionListener {
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(playerToGo);
+        panel.add(playerToGo, gbc);
+
+        scoreboard = new JLabel();
+        updateScoreboard();
+        scoreboard.setFont(gameFont);
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.ipady = 40;
+        panel.add(scoreboard, gbc);
 
         return panel;
     }
+
+    private void updateScoreboard() {
+        var players = gamePlay.getPlayers();
+        scoreboard.setText(players[0].getName() + "  " + players[0].getPointsWon() + " : "
+            + players[1].getPointsWon() + "  " + players[1].getName());
+    }
+
     private void placePieces(){
         for(int i = 0; i < 8; i++)
             for(int j = 0; j < 8; j++)
@@ -154,13 +172,21 @@ public class ChessGUI extends JFrame implements ActionListener {
 
         else {
             placePieces();
-            if (moveType == MoveTypes.CHECKMATE)
+            if (moveType == MoveTypes.CHECKMATE) {
                 checkMateMessage();
+                newGame();
+            }
             else if(moveType == MoveTypes.CHECK)
                 checkMessage();
         }
         updateInfoLabel();
         resetPressedButtons();
+    }
+
+    private void newGame() {
+        gamePlay.initialiseNewGame();
+        placePieces();
+        updateScoreboard();
     }
 
     private void updateInfoLabel() {
@@ -195,6 +221,10 @@ public class ChessGUI extends JFrame implements ActionListener {
     }
 
     public String getPlayerName(int playerNumber) {
-        return JOptionPane.showInputDialog("Add name of player " + playerNumber);
+        String name;
+        name =  JOptionPane.showInputDialog("Add name of player " + playerNumber);
+        if(name == null)
+            name = "Player " + playerNumber;
+        return name;
     }
 }

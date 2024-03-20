@@ -10,28 +10,30 @@ public class Player {
     private String pieceColourString;
     private HashMap<String, Piece> pieces;
     private boolean inCheck;
-    private final int initialRank;
-    private final int initialPawnRank;
+    private int initialRank;
+    private int initialPawnRank;
     private int numberOfPromotions;
     private int pointsWon;
     public Player(String name, PieceColour pieceColour) {
         this.name = name;
-        this.pieceColour = pieceColour;
         this.inCheck = false;
         this.numberOfPromotions = 0;
-        this.pointsWon = 0;
-        if(pieceColour == PieceColour.WHITE) {
-            pieceColourString = "White";
-            initialRank = 7;
-            initialPawnRank = 6;
-        }
-        else {
-            pieceColourString = "Black";
-            initialRank = 0;
-            initialPawnRank = 1;
-        }
-
+        this.pieceColour = pieceColour;
+        if(pieceColour == PieceColour.WHITE)
+            initialiseWhite();
+        else
+            initialiseBlack();
         initialisePieces();
+    }
+    private void initialiseWhite(){
+        pieceColourString = "White";
+        initialRank = 7;
+        initialPawnRank = 6;
+    }
+    private void  initialiseBlack(){
+        pieceColourString = "Black";
+        initialRank = 0;
+        initialPawnRank = 1;
     }
     private void initialisePieces() {
         pieces = new HashMap<>();
@@ -49,6 +51,20 @@ public class Player {
             pieces.put(pawnName, new PawnPiece(pieceColour, new int[]{initialPawnRank, i}, pawnName));
         }
     }
+    public void playerNewGame(){
+        this.inCheck = false;
+        this.numberOfPromotions = 0;
+        if(pieceColour == PieceColour.WHITE) {
+            this.pieceColour = PieceColour.BLACK;
+            initialiseBlack();
+        }
+        else{
+            this.pieceColour = PieceColour.WHITE;
+            initialiseWhite();
+        }
+        initialisePieces();
+    }
+
     public String getName() {
         return name;
     }

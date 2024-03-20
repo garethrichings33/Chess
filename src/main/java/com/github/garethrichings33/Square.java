@@ -7,7 +7,6 @@ public class Square{
     private boolean occupied;
     private int[] coordinates = new int[2];
     private Piece piece;
-
     public Square(SquareColour squareColour, int[] coordinates) {
         this.squareColour = squareColour;
         setCoordinates(coordinates);
@@ -22,12 +21,6 @@ public class Square{
         this.coordinates[1] = coordinates[1];
     }
 
-    public String getFileAndRank() {
-        rank = 8-coordinates[0];
-        file = (char)(65+coordinates[1]);
-        return file.toString() + Integer.toString(rank);
-    }
-
     public SquareColour getSquareColour() {
         return squareColour;
     }
@@ -38,7 +31,7 @@ public class Square{
 
     public void setPiece(Piece piece) {
         this.piece = piece;
-        setOccupied(!isOccupied());
+        setOccupied(piece !=null);
     }
 
     public boolean isOccupied() {
