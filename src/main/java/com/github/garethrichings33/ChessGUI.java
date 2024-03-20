@@ -256,7 +256,7 @@ public class ChessGUI extends JFrame implements ActionListener {
     private void outputTurns() {
         JFrame outputFrame = new JFrame("Turns");
         outputFrame.setFont(gameFont);
-        outputFrame.setSize(100, 400);
+        outputFrame.setSize(200, 400);
         outputFrame.setDefaultCloseOperation(HIDE_ON_CLOSE);
         outputFrame.setLayout(new BorderLayout());
 
@@ -267,9 +267,11 @@ public class ChessGUI extends JFrame implements ActionListener {
 
         var turns = gamePlay.getTurns();
         String turn;
+        int turnNo = 0;
         while(!turns.isEmpty()){
+            turnNo++;
             turn = turns.removeFirst().toString();
-            textArea.append(turn);
+            textArea.append(turnNo + ":  " + turn);
         }
 
         var scrollPane = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
