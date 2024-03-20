@@ -115,7 +115,8 @@ public class ChessGUI extends JFrame implements ActionListener {
         GridBagConstraints gbc;
         var panel = new JPanel(new GridBagLayout());
 
-        playerToGo = new JLabel("White to go");
+        playerToGo = new JLabel();
+        updateInfoLabel();
         playerToGo.setFont(gameFont);
         gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.NONE;
@@ -137,7 +138,6 @@ public class ChessGUI extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent action) {
         var buttonPressed = action.getActionCommand();
-        MoveTypes moveType;
 
         if(fromButton.equals(""))
             fromButton = buttonPressed;
@@ -164,7 +164,8 @@ public class ChessGUI extends JFrame implements ActionListener {
     }
 
     private void updateInfoLabel() {
-        playerToGo.setText(gamePlay.getActivePlayer().getPieceColourString() + " to go");
+        playerToGo.setText(gamePlay.getActivePlayer().getPieceColourString() +
+                " to go (" + gamePlay.getActivePlayer().getName() + ")" );
     }
 
     private void resetPressedButtons() {
@@ -188,8 +189,12 @@ public class ChessGUI extends JFrame implements ActionListener {
                 "Check");
     }
 
-    private void checkMateMessage() {
+    public void checkMateMessage() {
         JOptionPane.showMessageDialog(this,
-                "Checkmate!");
+                "Checkmate! " + gamePlay.getInactivePlayer().getName() + " wins!");
+    }
+
+    public String getPlayerName(int playerNumber) {
+        return JOptionPane.showInputDialog("Add name of player " + playerNumber);
     }
 }

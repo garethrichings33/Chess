@@ -21,8 +21,8 @@ public class GamePlay {
     }
     private void initialisePlayers() {
         players = new Player[2];
-        players[0] = new Player("Player 1", PieceColour.WHITE);
-        players[1] = new Player("Player 2", PieceColour.BLACK);
+        players[0] = new Player(gui.getPlayerName(1), PieceColour.WHITE);
+        players[1] = new Player(gui.getPlayerName(2), PieceColour.BLACK);
         activePlayer = 0;
         inactivePlayer = 1;
     }
@@ -139,7 +139,6 @@ public class GamePlay {
         activePlayer = (activePlayer + 1) % 2;
         inactivePlayer = (inactivePlayer + 1) % 2;
     }
-
     private Move getMove(Piece movingPiece, int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         var move = movingPiece.getMove(fromSquareCoordinates, toSquareCoordinates);
         if(!move.isValidMove())
@@ -203,7 +202,6 @@ public class GamePlay {
 
         return move;
     }
-
     private boolean noPieceSelected(int[] fromSquareCoordinates) {
         return getSquare(fromSquareCoordinates).getPiece() == null;
     }
@@ -233,7 +231,6 @@ public class GamePlay {
     }
     private void endGame() {
         players[activePlayer].addPoint();
-        System.out.println("Checkmate");
     }
     private boolean defenderInCheck(int defendingPlayerIndex, int[] defendingKingSquareCoords){
         int attackingPlayerIndex = (defendingPlayerIndex + 1) % 2;
@@ -384,6 +381,9 @@ public class GamePlay {
             players[inactivePlayer].addPiece(pieceTaken.getPieceName(), pieceTaken);
             board[takenCoordinates[0]][takenCoordinates[1]].setPiece(pieceTaken);
         }
+    }
+    public Player getInactivePlayer() {
+        return players[inactivePlayer];
     }
     public Player getActivePlayer() {
         return players[activePlayer];

@@ -5,7 +5,7 @@ import java.util.Set;
 
 
 public class Player {
-    private String name;
+    private final String name;
     private PieceColour pieceColour;
     private String pieceColourString;
     private HashMap<String, Piece> pieces;
@@ -48,6 +48,9 @@ public class Player {
             pawnName = "Pawn_" + Character.toString((char) (65 + i));
             pieces.put(pawnName, new PawnPiece(pieceColour, new int[]{initialPawnRank, i}, pawnName));
         }
+    }
+    public String getName() {
+        return name;
     }
     public PieceColour getPieceColour() {
         return pieceColour;
