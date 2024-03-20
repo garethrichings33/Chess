@@ -9,6 +9,9 @@ public class ChessGUI extends JFrame implements ActionListener {
     private GamePlay gamePlay;
     private JPanel boardPanel;
     private JPanel infoPanel;
+    private JPanel buttonPanel;
+    private JButton drawButton;
+    private JButton concedeButton;
     private Font gameFont;
     private JButton[][] squareButtons;
     private JLabel playerToGo;
@@ -49,8 +52,14 @@ public class ChessGUI extends JFrame implements ActionListener {
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.ipady = 30;
         add(infoPanel, gbc);
+
+        buttonPanel = createButtonPanel();
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        add(buttonPanel, gbc);
     }
 
     private JPanel createBoardPanel() {
@@ -117,7 +126,7 @@ public class ChessGUI extends JFrame implements ActionListener {
         var panel = new JPanel(new GridBagLayout());
 
         playerToGo = new JLabel();
-        updateInfoLabel();
+        updateNextPlayerLabel();
         playerToGo.setFont(gameFont);
         gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.NONE;
@@ -138,10 +147,43 @@ public class ChessGUI extends JFrame implements ActionListener {
         return panel;
     }
 
+    private JPanel createButtonPanel() {
+        GridBagConstraints gbc;
+        var panel = new JPanel(new GridBagLayout());
+        var insets = new Insets(0, 10, 0, 10);
+
+        drawButton = new JButton();
+        drawButton.setFont(gameFont);
+        drawButton.setText("Draw");
+        drawButton.addActionListener(this);
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = insets;
+        panel.add(drawButton, gbc);
+
+        concedeButton = new JButton();
+        concedeButton.setFont(gameFont);
+        concedeButton.setText("Concede");
+        concedeButton.addActionListener(this);
+        gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.insets = insets;
+        panel.add(concedeButton, gbc);
+
+        return panel;
+    }
+
     private void updateScoreboard() {
         var players = gamePlay.getPlayers();
-        scoreboard.setText(players[0].getName() + "  " + players[0].getPointsWon() + " : "
-            + players[1].getPointsWon() + "  " + players[1].getName());
+        String format = "%s %.0f : %.0f %s";
+        if(Math.abs(players[0].getPointsWon() - Math.floor(players[0].getPointsWon())) >  0.1)
+            format = "%s %.1f : %.1f %s";
+        scoreboard.setText(String.format(format, players[0].getName(), players[0].getPointsWon(),
+                 players[1].getPointsWon(), players[1].getName()));
     }
 
     private void placePieces(){
@@ -157,7 +199,11 @@ public class ChessGUI extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent action) {
         var buttonPressed = action.getActionCommand();
 
-        if(fromButton.equals(""))
+        if(buttonPressed.equals("Draw"))
+            draw();
+        else if(buttonPressed.equals("Concede"))
+            concede();
+        else if(fromButton.equals(""))
             fromButton = buttonPressed;
         else {
             toButton = buttonPressed;
@@ -165,22 +211,73 @@ public class ChessGUI extends JFrame implements ActionListener {
         }
     }
 
+    private void draw() {
+        if(JOptionPane.showConfirmDialog(this, "Draw?", "Confirm Draw",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+            gamePlay.drawGame();
+        outputTurnsConfirm();
+        newGame();
+        updateNextPlayerLabel();
+    }
+
+    private void concede() {
+        if(JOptionPane.showConfirmDialog(this, "Really Concede?", "Confirm Concession",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+            gamePlay.concedeGame();
+        outputTurnsConfirm();
+        newGame();
+        updateNextPlayerLabel();
+    }
+
     private void moveManager() {
         var moveType = gamePlay.gameTurn(fromButton, toButton);
         if(moveType == MoveTypes.INVALID)
             invalidMoveWarning();
-
         else {
             placePieces();
             if (moveType == MoveTypes.CHECKMATE) {
                 checkMateMessage();
+                outputTurnsConfirm();
                 newGame();
             }
             else if(moveType == MoveTypes.CHECK)
                 checkMessage();
+            updateNextPlayerLabel();
         }
-        updateInfoLabel();
         resetPressedButtons();
+    }
+
+    private void outputTurnsConfirm() {
+        if(JOptionPane.showConfirmDialog(this, "Get list of turns?", "Output Turns",
+            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+            outputTurns();
+    }
+
+    private void outputTurns() {
+        JFrame outputFrame = new JFrame("Turns");
+        outputFrame.setFont(gameFont);
+        outputFrame.setSize(100, 400);
+        outputFrame.setDefaultCloseOperation(HIDE_ON_CLOSE);
+        outputFrame.setLayout(new BorderLayout());
+
+        JTextArea textArea = new JTextArea();
+        textArea.setFont(gameFont);
+        textArea.setEditable(false);
+        textArea.getCaret().setVisible(false);
+
+        var turns = gamePlay.getTurns();
+        String turn;
+        while(!turns.isEmpty()){
+            turn = turns.removeFirst().toString();
+            textArea.append(turn);
+        }
+
+        var scrollPane = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setSize(new Dimension(90, 380));
+
+        outputFrame.add(scrollPane);
+        outputFrame.setVisible(true);
     }
 
     private void newGame() {
@@ -189,7 +286,7 @@ public class ChessGUI extends JFrame implements ActionListener {
         updateScoreboard();
     }
 
-    private void updateInfoLabel() {
+    private void updateNextPlayerLabel() {
         playerToGo.setText(gamePlay.getActivePlayer().getPieceColourString() +
                 " to go (" + gamePlay.getActivePlayer().getName() + ")" );
     }
@@ -223,7 +320,7 @@ public class ChessGUI extends JFrame implements ActionListener {
     public String getPlayerName(int playerNumber) {
         String name;
         name =  JOptionPane.showInputDialog("Add name of player " + playerNumber);
-        if(name == null)
+        if(name == null || name.length() == 0)
             name = "Player " + playerNumber;
         return name;
     }

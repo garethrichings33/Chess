@@ -8,8 +8,7 @@ public class GamePlay {
     private Player[] players;
     private int activePlayer;
     private int inactivePlayer;
-//    private ArrayList<String> moveList;
-    private Stack<Turn> turns;
+    private ArrayDeque<Turn> turns;
     private Move attackingMove;
     public GamePlay(ChessGUI gui) {
         this.gui = gui;
@@ -17,7 +16,7 @@ public class GamePlay {
         board = createBoard();
 
         addInitialPieces();
-        turns = new Stack<>();
+        turns = new ArrayDeque<>();
     }
     private void initialisePlayers() {
         players = new Player[2];
@@ -54,7 +53,7 @@ public class GamePlay {
         }
         removeAllPieces();
         addInitialPieces();
-        turns = new Stack<>();
+        turns = new ArrayDeque<>();
     }
     private void removeAllPieces(){
         for(int i = 0; i < 8; i++)
@@ -69,23 +68,23 @@ public class GamePlay {
             blackPlayerIndex = 1;
         int whitePlayerIndex = (blackPlayerIndex + 1) % 2;
 
-        board[0][0].setPiece(players[blackPlayerIndex].getPiece("Queens_Rook"));
-        board[0][1].setPiece(players[blackPlayerIndex].getPiece("Queens_Knight"));
-        board[0][2].setPiece(players[blackPlayerIndex].getPiece("Queens_Bishop"));
+        board[0][0].setPiece(players[blackPlayerIndex].getPiece("Rook_Queens"));
+        board[0][1].setPiece(players[blackPlayerIndex].getPiece("Knight_Queens"));
+        board[0][2].setPiece(players[blackPlayerIndex].getPiece("Bishop_Queens"));
         board[0][3].setPiece(players[blackPlayerIndex].getPiece("Queen"));
         board[0][4].setPiece(players[blackPlayerIndex].getPiece("King"));
-        board[0][5].setPiece(players[blackPlayerIndex].getPiece("Kings_Bishop"));
-        board[0][6].setPiece(players[blackPlayerIndex].getPiece("Kings_Knight"));
-        board[0][7].setPiece(players[blackPlayerIndex].getPiece("Kings_Rook"));
+        board[0][5].setPiece(players[blackPlayerIndex].getPiece("Bishop_Kings"));
+        board[0][6].setPiece(players[blackPlayerIndex].getPiece("Knight_Kings"));
+        board[0][7].setPiece(players[blackPlayerIndex].getPiece("Rook_Kings"));
 
-        board[7][0].setPiece(players[whitePlayerIndex].getPiece("Queens_Rook"));
-        board[7][1].setPiece(players[whitePlayerIndex].getPiece("Queens_Knight"));
-        board[7][2].setPiece(players[whitePlayerIndex].getPiece("Queens_Bishop"));
+        board[7][0].setPiece(players[whitePlayerIndex].getPiece("Rook_Queens"));
+        board[7][1].setPiece(players[whitePlayerIndex].getPiece("Knight_Queens"));
+        board[7][2].setPiece(players[whitePlayerIndex].getPiece("Bishop_Queens"));
         board[7][3].setPiece(players[whitePlayerIndex].getPiece("Queen"));
         board[7][4].setPiece(players[whitePlayerIndex].getPiece("King"));
-        board[7][5].setPiece(players[whitePlayerIndex].getPiece("Kings_Bishop"));
-        board[7][6].setPiece(players[whitePlayerIndex].getPiece("Kings_Knight"));
-        board[7][7].setPiece(players[whitePlayerIndex].getPiece("Kings_Rook"));
+        board[7][5].setPiece(players[whitePlayerIndex].getPiece("Bishop_Kings"));
+        board[7][6].setPiece(players[whitePlayerIndex].getPiece("Knight_Kings"));
+        board[7][7].setPiece(players[whitePlayerIndex].getPiece("Rook_Kings"));
 
         for(int i = 0; i < 8; i++){
             board[1][i].setPiece(players[blackPlayerIndex]
@@ -94,7 +93,6 @@ public class GamePlay {
                     .getPiece("Pawn_" + Character.toString((char)(65+i))));
         }
     }
-
     public MoveTypes gameTurn(String fromButton, String toButton) {
         int[] fromSquareCoordinates = getSquareCoordinates(fromButton);
         int[] toSquareCoordinates = getSquareCoordinates(toButton);
@@ -124,11 +122,7 @@ public class GamePlay {
                         attackingMove.getCastledRookSquareCoordinates(), attackingMove.getTakenPiece(),
                         attackingMove.getTakenSquareCoordinates());
             players[activePlayer].setInCheck(false);
-        }
 
-//        writeMove(fromSquareCoordinates, toSquareCoordinates, piece, pieceTaken);
-
-        if(attackingMove.isValidMove()) {
             if(attackingMove.getTakenPiece() != null)
                 players[inactivePlayer].removePiece(attackingMove.getTakenPiece().getPieceName());
             if(defenderInCheck(inactivePlayer,
@@ -142,8 +136,10 @@ public class GamePlay {
                     returnMove = MoveTypes.CHECK;
                 }
             }
-            turns.push(new Turn(activePlayer, movingPiece, attackingMove.getTakenPiece(), fromSquareCoordinates,
-                    toSquareCoordinates, returnMove, players[inactivePlayer].isInCheck()));
+            turns.add(new Turn(activePlayer, movingPiece, attackingMove.getTakenPiece(), fromSquareCoordinates,
+                    toSquareCoordinates, returnMove, players[inactivePlayer].isInCheck(),
+                    players[inactivePlayer].isInCheckMate(), attackingMove.isCastlingMove(),
+                    attackingMove.isPromotionMove()));
             movingPiece.incrementMoves();
             updatePlayerIndices();
         }
@@ -247,6 +243,7 @@ public class GamePlay {
         return true;
     }
     private void endGame() {
+        players[inactivePlayer].setInCheckMate(true);
         players[activePlayer].addPoint();
     }
     private boolean defenderInCheck(int defendingPlayerIndex, int[] defendingKingSquareCoords){
@@ -351,7 +348,7 @@ public class GamePlay {
         if(turns.isEmpty())
             return false;
 
-        Turn lastTurn = turns.peek();
+        Turn lastTurn = turns.peekLast();
         Piece lastMovedPiece = lastTurn.getMovedPiece();
 
 //      Last moved piece must be a pawn.
@@ -376,7 +373,7 @@ public class GamePlay {
         return true;
     }
     private Piece getEnPassantTakenPiece() {
-        int[] takenSquareCoords = turns.peek().getFinalSquare();
+        int[] takenSquareCoords = turns.peekLast().getFinalSquare();
         return board[takenSquareCoords[0]][takenSquareCoords[1]].getPiece();
     }
     private void completeMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
@@ -414,9 +411,9 @@ public class GamePlay {
     private Piece getCastlingRook(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         String pieceName;
         if(fromSquareCoordinates[1] < toSquareCoordinates[1])
-            pieceName = "Kings_Rook";
+            pieceName = "Rook_Kings";
         else
-            pieceName = "Queens_Rook";
+            pieceName = "Rook_Queens";
 
         var piece = players[activePlayer].getPiece(pieceName);
         if(piece.getNumberOfMovesCompleted() != 0)
@@ -438,5 +435,15 @@ public class GamePlay {
         coords[0] = fromSquareCoordinates[0];
         coords[1] = (fromSquareCoordinates[1] + toSquareCoordinates[1])/2;
         return coords;
+    }
+    public void drawGame() {
+        players[activePlayer].addHalfPoint();
+        players[inactivePlayer].addHalfPoint();
+    }
+    public void concedeGame() {
+        players[inactivePlayer].addPoint();
+    }
+    public ArrayDeque<Turn> getTurns() {
+        return turns;
     }
 }

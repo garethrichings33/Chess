@@ -10,13 +10,15 @@ public class Player {
     private String pieceColourString;
     private HashMap<String, Piece> pieces;
     private boolean inCheck;
+    private boolean inCheckMate;
     private int initialRank;
     private int initialPawnRank;
     private int numberOfPromotions;
-    private int pointsWon;
+    private float pointsWon;
     public Player(String name, PieceColour pieceColour) {
         this.name = name;
         this.inCheck = false;
+        this.inCheckMate = false;
         this.numberOfPromotions = 0;
         this.pieceColour = pieceColour;
         if(pieceColour == PieceColour.WHITE)
@@ -39,12 +41,14 @@ public class Player {
         pieces = new HashMap<>();
         pieces.put("King", new KingPiece(pieceColour, new int[]{initialRank, 4}, "King"));
         pieces.put("Queen", new QueenPiece(pieceColour, new int[]{initialRank, 3}, "Queen"));
-        pieces.put("Kings_Bishop", new BishopPiece(pieceColour, SquareColour.BLACK, new int[]{initialRank, 5}, "Kings_Bishop"));
-        pieces.put("Queens_Bishop", new BishopPiece(pieceColour, SquareColour.WHITE, new int[]{initialRank, 2}, "Queens_Bishop"));
-        pieces.put("Kings_Knight", new KnightPiece(pieceColour, new int[]{initialRank, 6}, "Kings_Knight"));
-        pieces.put("Queens_Knight", new KnightPiece(pieceColour, new int[]{initialRank, 1}, "Queens_Knight"));
-        pieces.put("Kings_Rook", new RookPiece(pieceColour, new int[]{initialRank, 7}, "Kings_Rook"));
-        pieces.put("Queens_Rook", new RookPiece(pieceColour, new int[]{initialRank, 0}, "Queens_Rook"));
+        pieces.put("Bishop_Kings", new BishopPiece(pieceColour, SquareColour.BLACK,
+                new int[]{initialRank, 5}, "Bishop_Kings"));
+        pieces.put("Bishop_Queens", new BishopPiece(pieceColour, SquareColour.WHITE,
+                new int[]{initialRank, 2}, "Bishop_Queens"));
+        pieces.put("Knight_Kings", new KnightPiece(pieceColour, new int[]{initialRank, 6}, "Knight_Kings"));
+        pieces.put("Knight_Queens", new KnightPiece(pieceColour, new int[]{initialRank, 1}, "Knight_Queens"));
+        pieces.put("Rook_Kings", new RookPiece(pieceColour, new int[]{initialRank, 7}, "Rook_Kings"));
+        pieces.put("Rook_Queens", new RookPiece(pieceColour, new int[]{initialRank, 0}, "Rook_Queens"));
         String pawnName;
         for(int i = 0; i < 8; i++) {
             pawnName = "Pawn_" + Character.toString((char) (65 + i));
@@ -53,6 +57,7 @@ public class Player {
     }
     public void playerNewGame(){
         this.inCheck = false;
+        this.inCheckMate = false;
         this.numberOfPromotions = 0;
         if(pieceColour == PieceColour.WHITE) {
             this.pieceColour = PieceColour.BLACK;
@@ -89,6 +94,13 @@ public class Player {
     public void setInCheck(boolean inCheck) {
         this.inCheck = inCheck;
     }
+    public boolean isInCheckMate() {
+        return inCheckMate;
+    }
+    public void setInCheckMate(boolean inCheckMate) {
+        this.inCheckMate = inCheckMate;
+    }
+
     public Piece getPiece(String key){
         if(pieces.containsKey(key))
             return pieces.get(key);
@@ -109,7 +121,10 @@ public class Player {
     public void addPoint(){
         pointsWon++;
     }
-    public int getPointsWon() {
+    public void addHalfPoint(){
+        pointsWon += 0.5;
+    }
+    public float getPointsWon() {
         return pointsWon;
     }
 }
