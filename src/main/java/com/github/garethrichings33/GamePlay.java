@@ -102,29 +102,31 @@ public class GamePlay {
         if(wrongColourPiece(fromSquareCoordinates))
             return MoveTypes.INVALID;
 
-        MoveTypes returnMove = MoveTypes.VALID;
         Piece movingPiece = getSquare(fromSquareCoordinates).getPiece();
-
         attackingMove = getMove(movingPiece, fromSquareCoordinates, toSquareCoordinates);
-        movingPiece = attackingMove.getMovingPiece();
+        if(!attackingMove.isValidMove())
+            return MoveTypes.INVALID;
+        if(attackingMove.isPromotionMove())
+            movingPiece = attackingMove.getMovingPiece();
 
-//      Complete the actual move if not a special move.
+        MoveTypes returnMove = MoveTypes.VALID;
         if(attackingMove.isValidMove()) {
-            completeMove(movingPiece, fromSquareCoordinates, toSquareCoordinates, attackingMove.getTakenPiece(),
-                    attackingMove.getTakenSquareCoordinates());
-            if(attackerIntoCheck(activePlayer, attackingMove)){
-                undoMove(movingPiece, fromSquareCoordinates, toSquareCoordinates, attackingMove.getTakenPiece(),
-                        attackingMove.getTakenSquareCoordinates());
-                attackingMove.setInvalidMove();
-            }
+            if(moveIntoCheck(activePlayer, attackingMove))
+                return MoveTypes.INVALID;
+
+            completeMove(attackingMove);
             if(attackingMove.isCastlingMove())
-                completeMove(attackingMove.getCastledRook(), attackingMove.getCastledRook().getCurrentSquare(),
-                        attackingMove.getCastledRookSquareCoordinates(), attackingMove.getTakenPiece(),
-                        attackingMove.getTakenSquareCoordinates());
+                completeMove(new Move(attackingMove.getCastledRook(),
+                        attackingMove.getCastledRook().getCurrentSquare(),
+                        attackingMove.getCastledRookSquareCoordinates(),
+                        true, false, false, false,
+                        true, true));
+
             players[activePlayer].setInCheck(false);
 
             if(attackingMove.getTakenPiece() != null)
                 players[inactivePlayer].removePiece(attackingMove.getTakenPiece().getPieceName());
+
             if(defenderInCheck(inactivePlayer,
                     players[inactivePlayer].getPiece("King").getCurrentSquare())) {
                 if(isPlayerCheckmated()){
@@ -144,60 +146,55 @@ public class GamePlay {
             updatePlayerIndices();
         }
 
-        if(!attackingMove.isValidMove())
-            returnMove = MoveTypes.INVALID;
         return returnMove;
     }
+
     private void updatePlayerIndices() {
         activePlayer = (activePlayer + 1) % 2;
         inactivePlayer = (inactivePlayer + 1) % 2;
     }
     private Move getMove(Piece movingPiece, int[] fromSquareCoordinates, int[] toSquareCoordinates) {
-        var move = movingPiece.getMove(fromSquareCoordinates, toSquareCoordinates);
-        if(!move.isValidMove())
+        var proposedMove = movingPiece.getMove(fromSquareCoordinates, toSquareCoordinates);
+
+        if(!proposedMove.isValidMove())
             return new InvalidMove();
 
-        if(!movingPiece.getCanJump()){
-            ArrayList<int[]> visitedSquares =
-                    movingPiece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
-            for(var visitedSquare : visitedSquares)
-                if(getSquare(visitedSquare).getPiece() != null)
-                    return new InvalidMove();
-        }
+        if(illegallyJumping(movingPiece, fromSquareCoordinates, toSquareCoordinates))
+            return new InvalidMove();
 
-        if(getSquare(toSquareCoordinates).getPiece() != null) {
-            if(getSquare(toSquareCoordinates).getPiece().getColour() == movingPiece.getColour() ||
-                    !move.isTakingMove())
-                return new InvalidMove();
-            else {
-                move.setTakenPiece(getSquare(toSquareCoordinates).getPiece());
-                move.setTakenSquareCoordinates(Arrays.copyOf(toSquareCoordinates, toSquareCoordinates.length));
+        if(squareIsOccupied(toSquareCoordinates)) {
+            if(proposedMoveCanTake(movingPiece, toSquareCoordinates, proposedMove)) {
+                proposedMove.setTakenPiece(getSquare(toSquareCoordinates).getPiece());
+                proposedMove.setTakenSquareCoordinates(Arrays.copyOf(toSquareCoordinates,
+                        toSquareCoordinates.length));
             }
+            else
+                return new InvalidMove();
         }
-        else if(move.isTakingOnlyMove()) {
+        else if(proposedMove.isTakingOnlyMove()) {
             if (isEnPassant(fromSquareCoordinates)) {
-                move.setTakenPiece(getEnPassantTakenPiece());
-                move.setTakenSquareCoordinates(move.getTakenPiece().getCurrentSquare());
-                move.setEnPassantMove(true);
+                proposedMove.setTakenPiece(getEnPassantTakenPiece());
+                proposedMove.setTakenSquareCoordinates(proposedMove.getTakenPiece().getCurrentSquare());
+                proposedMove.setEnPassantMove(true);
             }
             else
                 return new InvalidMove();
         }
 
-        if(move.isCastlingMove()){
-            if(move.getTakenPiece() != null || players[activePlayer].isInCheck())
+        if(proposedMove.isCastlingMove()){
+            if(!castlingKingCanMove(proposedMove))
                 return new InvalidMove();
             var castledRook = getCastlingRook(fromSquareCoordinates, toSquareCoordinates);
             if(castledRook != null){
                 if(castlingPathClear(movingPiece, castledRook)) {
                     var castledRookSquare = getCastledRookSquare(fromSquareCoordinates, toSquareCoordinates);
                     completeMove(movingPiece, fromSquareCoordinates, castledRookSquare, null, null);
-                    var checked = attackerIntoCheck(activePlayer, move);
+                    var checked = moveIntoCheck(activePlayer, proposedMove);
                     undoMove(movingPiece,fromSquareCoordinates, castledRookSquare, null, null);
                     if(checked)
                         return new InvalidMove();
-                    move.setCastledRook(castledRook);
-                    move.setCastledRookSquareCoordinates(castledRookSquare);
+                    proposedMove.setCastledRook(castledRook);
+                    proposedMove.setCastledRookSquareCoordinates(castledRookSquare);
                 }
                 else
                     return new InvalidMove();
@@ -206,15 +203,34 @@ public class GamePlay {
                 return new InvalidMove();
         }
 
-        if(move.isPromotionMove() && (!move.isTakingMove() || move.getTakenPiece() != null)){
+        if(proposedMove.isPromotionMove() && (!proposedMove.isTakingMove() || proposedMove.getTakenPiece() != null)){
             var chosenPieceName = gui.promotePawn(fromSquareCoordinates, toSquareCoordinates);
-            move.setTakenPiece(movingPiece);
-            move.setTakenSquareCoordinates(Arrays.copyOf(fromSquareCoordinates, fromSquareCoordinates.length));
-            move.setMovingPiece(pawnPromotion(toSquareCoordinates, chosenPieceName, movingPiece));
+            proposedMove.setPromotedPiece(movingPiece);
+            proposedMove.setMovingPiece(pawnPromotion(toSquareCoordinates, chosenPieceName, movingPiece));
         }
 
-        return move;
+        return proposedMove;
     }
+    private boolean squareIsOccupied(int[] squareCoordinates) {
+        return getSquare(squareCoordinates).getPiece() != null;
+    }
+    private boolean proposedMoveCanTake(Piece movingPiece, int[] toSquareCoordinates, Move proposedMove) {
+        return getSquare(toSquareCoordinates).getPiece().getColour() != movingPiece.getColour() &&
+                proposedMove.isTakingMove();
+    }
+    private boolean illegallyJumping(Piece movingPiece, int[] fromSquareCoordinates, int[] toSquareCoordinates) {
+        if(movingPiece.getCanJump())
+            return false;
+
+        ArrayList<int[]> visitedSquares =
+                movingPiece.getVisitedSquares(fromSquareCoordinates, toSquareCoordinates);
+        for(var visitedSquare : visitedSquares)
+            if(squareIsOccupied(visitedSquare))
+                return true;
+
+        return false;
+    }
+
     private boolean noPieceSelected(int[] fromSquareCoordinates) {
         return getSquare(fromSquareCoordinates).getPiece() == null;
     }
@@ -236,8 +252,9 @@ public class GamePlay {
                 move = getMove(defendingPiece, initialSquare, finalSquare);
                 if(!move.isValidMove())
                     continue;
-                if(!attackerIntoCheck(inactivePlayer, move))
+                if(!moveIntoCheck(inactivePlayer, move)) {
                     return false;
+                }
             }
         }
         return true;
@@ -252,7 +269,7 @@ public class GamePlay {
         return canAttackerTakeKing(attackingPlayerIndex, attackingPlayerPieceNames, new HashSet<>(),
                 defendingKingSquareCoords, new InvalidMove());
     }
-    private boolean attackerIntoCheck(int attackingPlayerIndex, Move lastMove) {
+    private boolean moveIntoCheck(int attackingPlayerIndex, Move lastMove) {
         int defendingPlayerIndex = (attackingPlayerIndex + 1) % 2;
         var defendingPlayerPieceNames = players[defendingPlayerIndex].getPieceNames();
 
@@ -266,6 +283,9 @@ public class GamePlay {
         Set<String> ignorePieces = new HashSet<>();
         if(lastMove.getTakenPiece() != null)
             ignorePieces.add(lastMove.getTakenPiece().getPieceName());
+
+        if(kingSquareCoords[0] == 7 && kingSquareCoords[1] == 0)
+            System.out.println(movingPiece.getPieceName() + " Ignore: " + ignorePieces.isEmpty());
 
         var inCheck = canAttackerTakeKing(defendingPlayerIndex, defendingPlayerPieceNames, ignorePieces,
                 kingSquareCoords, lastMove);
@@ -294,13 +314,16 @@ public class GamePlay {
                                      int[] defendingKingSquareCoords, Move lastMove){
         var nextAttackingMove = attackingPiece.getMove(attackingPieceCoords, defendingKingSquareCoords);
         var canMoveTakeKing = nextAttackingMove.isValidMove() && nextAttackingMove.isTakingMove();
+
         if(canMoveTakeKing && !attackingPiece.getCanJump()) {
             ArrayList<int[]> visitedSquares =
                     attackingPiece.getVisitedSquares(attackingPieceCoords, defendingKingSquareCoords);
-            for (var visitedSquare : visitedSquares)
+            for (var visitedSquare : visitedSquares) {
                 canMoveTakeKing = canMoveTakeKing &&
-                        getSquare(visitedSquare).getPiece() == null &&
+                        (getSquare(visitedSquare).getPiece() == null ||
+                                Arrays.equals(visitedSquare, lastMove.getFromCoordinates())) &&
                         !Arrays.equals(visitedSquare, lastMove.getToCoordinates());
+            }
         }
         return canMoveTakeKing;
     }
@@ -317,8 +340,6 @@ public class GamePlay {
         coordinates[1] = temp % 10;
 
         return coordinates;
-    }
-    private void writeMove(int[] fromSquareCoordinates, int[] toSquareCoordinates, Piece piece, Piece pieceTaken) {
     }
     public Piece pawnPromotion(int[] toCoordinates, String chosenPieceType, Piece promotedPiece) {
         Piece chosenPiece = null;
@@ -386,6 +407,17 @@ public class GamePlay {
         players[activePlayer].getPiece(movedPiece.getPieceName()).setCurrentSquare(toCoordinates);
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(null);
     }
+    private void completeMove(Move move){
+        if(move.getTakenPiece() != null){
+            board[move.getTakenSquareCoordinates()[0]][move.getTakenSquareCoordinates()[1]].setPiece(null);
+            players[inactivePlayer].removePiece(move.getTakenPiece().getPieceName());
+        }
+        if(move.getPromotedPiece() != null)
+            players[activePlayer].removePiece(move.getPromotedPiece().getPieceName());
+        board[move.getToCoordinates()[0]][move.getToCoordinates()[1]].setPiece(move.getMovingPiece());
+        players[activePlayer].getPiece(move.getMovingPiece().getPieceName()).setCurrentSquare(move.getToCoordinates());
+        board[move.getFromCoordinates()[0]][move.getFromCoordinates()[1]].setPiece(null);
+    }
     private void undoMove(Piece movedPiece, int[] fromCoordinates, int[] toCoordinates,
                           Piece pieceTaken, int[] takenCoordinates){
         board[fromCoordinates[0]][fromCoordinates[1]].setPiece(movedPiece);
@@ -407,6 +439,9 @@ public class GamePlay {
     }
     public Player[] getPlayers() {
         return players;
+    }
+    private boolean castlingKingCanMove(Move proposedMove) {
+        return proposedMove.getTakenPiece() == null && !players[activePlayer].isInCheck();
     }
     private Piece getCastlingRook(int[] fromSquareCoordinates, int[] toSquareCoordinates) {
         String pieceName;
